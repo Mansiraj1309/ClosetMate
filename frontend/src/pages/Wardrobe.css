@@ -1,0 +1,175 @@
+.wardrobe-page {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.wardrobe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+    .wardrobe-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    border-style: dashed !important;
+}
+
+.empty-icon {
+    color: var(--accent-primary);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.wardrobe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.item-card {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.item-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.8);
+    /* Red hover */
+}
+
+.item-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.season-badge {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    text-transform: capitalize;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Season Colors */
+.summer {
+    border-color: #fcd34d;
+    color: #fcd34d;
+}
+
+.winter {
+    border-color: #93c5fd;
+    color: #93c5fd;
+}
+
+.spring_fall {
+    border-color: #86efac;
+    color: #86efac;
+}
+
+.all-season {
+    border-color: #c4b5fd;
+    color: #c4b5fd;
+}
+
+.item-details {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.item-details h4 {
+    font-size: 1.1rem;
+    text-transform: capitalize;
+    margin: 0;
+}
+
+.item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag {
+    font-size: 0.75rem;
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent-primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--border-radius-sm);
+    text-transform: capitalize;
+}
+
+.item-notes {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0;
+    margin-top: auto;
+}

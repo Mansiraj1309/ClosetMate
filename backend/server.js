@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Routes
+app.use('/api/wardrobe', require('./routes/wardrobe'));
+
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/closetmate')
     .then(() => console.log('✅ Connected to MongoDB'))
