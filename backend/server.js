@@ -14,7 +14,10 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/wardrobe', require('./routes/wardrobe'));
+app.use('/api/stylist', require('./routes/stylist'));
+app.use('/api/stats', require('./routes/stats'));
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/closetmate')
