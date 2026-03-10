@@ -1,0 +1,452 @@
+.stylist-page {
+    animation: fadeIn 0.4s ease-out;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.stylist-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    color: var(--accent-secondary);
+    filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.4));
+}
+
+/* ── Quick prompt row ──────────────────────── */
+
+.quick-prompt-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.quick-chip {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    border-radius: 100px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.quick-chip:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(129, 140, 248, 0.08);
+}
+
+.quick-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Tabs ────────────────────────────────── */
+
+.stylist-tabs {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.tab-active {
+    background: rgba(129, 140, 248, 0.15);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* ── Container ────────────────────────────── */
+
+.stylist-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.input-card {
+    padding: 1.5rem;
+    border-color: rgba(129, 140, 248, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stylist-form {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.occasion-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 100px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.occasion-input:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.15);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.occasion-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* ── Outfit Generator form ───────────────── */
+
+.generator-card {
+    padding: 1.5rem;
+}
+
+.generator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.gen-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.gen-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.gen-field label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.gen-field select {
+    padding: 0.7rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.gen-field select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.gen-field option {
+    background: var(--bg-color);
+    color: var(--text-primary);
+}
+
+.gen-submit {
+    align-self: flex-start;
+}
+
+/* ── Error & spin ──────────────────────────── */
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ── Results ───────────────────────────────── */
+
+.animation-fade-in {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-rationale-card {
+    background: linear-gradient(145deg, rgba(129, 140, 248, 0.05) 0%, rgba(192, 132, 252, 0.05) 100%);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    margin-bottom: 2rem;
+}
+
+.rationale-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.rationale-header h3 {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.rationale-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+/* ── Outfit Breakdown (structured) ────────── */
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.breakdown-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    text-align: center;
+}
+
+.slot-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.slot-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+}
+
+.slot-name {
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.slot-empty {
+    opacity: 0.35;
+    border-style: dashed;
+}
+
+.slot-missing {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+}
+
+/* ── Outfit grid (full cards) ─────────────── */
+
+.outfit-heading {
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.outfit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.item-card { padding: 0; overflow: hidden; }
+
+.item-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.outfit-number-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: var(--accent-gradient);
+    color: white;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.item-details {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.item-details h4 {
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.type-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.tag {
+    font-size: 0.72rem;
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent-primary);
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--border-radius-sm);
+    text-transform: capitalize;
+}
+
+/* ── Shopping suggestions ─────────────────── */
+
+.shopping-section {
+    margin-top: 2.5rem;
+}
+
+.shopping-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.shopping-card {
+    border: 1px solid rgba(192, 132, 252, 0.15);
+    background: linear-gradient(145deg, rgba(192, 132, 252, 0.03) 0%, rgba(129, 140, 248, 0.03) 100%);
+}
+
+.shopping-item-name {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.shopping-reason {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.shopping-where {
+    margin-bottom: 0.75rem;
+}
+
+.shopping-where strong {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.shopping-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.store-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent-primary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.store-link:hover {
+    background: rgba(129, 140, 248, 0.25);
+    transform: translateY(-1px);
+}
+
+.estimated-price {
+    font-size: 0.9rem;
+    color: var(--accent-secondary);
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* ── Responsive ───────────────────────────── */
+
+@media (max-width: 640px) {
+    .stylist-form { flex-direction: column; }
+    .occasion-input { width: 100%; }
+    .stylist-form .cta-button { width: 100%; }
+    .gen-row { flex-direction: column; }
+    .breakdown-grid { grid-template-columns: repeat(3, 1fr); }
+}

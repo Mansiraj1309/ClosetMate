@@ -1,32 +1,68 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Sparkles, Shirt, Calendar, Upload } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import Wardrobe from './pages/Wardrobe';
+import Stylist from './pages/Stylist';
+import AuthPage from './pages/AuthPage';
+import ProfileMenu from './components/ProfileMenu';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import './index.css';
 
-// We extract the original Dashboard into its own component
+// Helper: Get upcoming Indian festivals & global events
+const getUpcomingEvents = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const events = [
+        { name: 'Holi', date: new Date(year, 2, 14), style: 'ethnic', tip: 'Wear old white clothes you don\'t mind getting colorful!' },
+        { name: 'Eid', date: new Date(year, 2, 31), style: 'ethnic', tip: 'Elegant kurta or sherwani with subtle accessories.' },
+        { name: 'Raksha Bandhan', date: new Date(year, 7, 9), style: 'ethnic', tip: 'Traditional ethnic wear — bright colors work great.' },
+        { name: 'Independence Day', date: new Date(year, 7, 15), style: 'smart-casual', tip: 'Tri-color themed outfit or crisp formals.' },
+        { name: 'Dussehra', date: new Date(year, 9, 2), style: 'ethnic', tip: 'Festive kurta with churidar or a vibrant saree.' },
+        { name: 'Diwali', date: new Date(year, 9, 20), style: 'ethnic', tip: 'Go all out — gold accents, rich fabrics, statement jewelry.' },
+        { name: 'Christmas', date: new Date(year, 11, 25), style: 'party', tip: 'Red, green or sparkly party outfit!' },
+        { name: 'New Year\'s Eve', date: new Date(year, 11, 31), style: 'party', tip: 'Your best party look — sequins, black, or metallics.' },
+    ];
+    return events.filter(e => e.date >= now).slice(0, 3);
+};
+
+// Dashboard Component
 const Dashboard = () => {
+    const { user, token } = useAuth();
+    const [stats, setStats] = useState({
+        totalItems: 0, totalCategories: 0, categoryBreakdown: {},
+        mostWorn: [], leastWorn: [], unusedItems: [], unusedCount: 0, seasonBreakdown: {}
+    });
+    const upcomingEvents = getUpcomingEvents();
+
+    useEffect(() => {
+        if (token) {
+            fetch('http://localhost:5001/api/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => setStats(data))
+                .catch(() => { });
+        }
+    }, [token]);
+
     return (
         <main className="main-content">
             <header className="hero-section">
-                <h1 className="gradient-text">Unlock Your Perfect Look.</h1>
+                <h1 className="gradient-text">
+                    {user?.name ? `Hey ${user.name.split(' ')[0]}, look great today.` : 'Unlock Your Perfect Look.'}
+                </h1>
                 <p className="subtitle">Let AI curate your daily outfits based on your actual wardrobe and events.</p>
-                <Link to="/wardrobe" className="cta-button" style={{ textDecoration: 'none' }}>
-                    <Shirt size={18} /> View My Wardrobe
-                </Link>
+                <div className="hero-buttons">
+                    <Link to="/wardrobe" className="cta-button" style={{ textDecoration: 'none' }}>
+                        <Shirt size={18} /> View My Wardrobe
+                    </Link>
+                    <Link to="/stylist" className="cta-button secondary-btn" style={{ textDecoration: 'none' }}>
+                        <Sparkles size={18} /> Ask AI Stylist
+                    </Link>
+                </div>
             </header>
 
             <section className="dashboard-grid">
-                {/* AI Suggestion Card */}
-                <div className="glass-card feature-card ai-card">
-                    <div className="card-header">
-                        <Sparkles className="card-icon highlight" />
-                        <h3>Today's AI Pick</h3>
-                    </div>
-                    <p>Smart casual for the team meeting.</p>
-                    <div className="placeholder-image ai-demo-img"></div>
-                </div>
-
                 {/* Wardrobe Stats Card */}
                 <div className="glass-card feature-card">
                     <div className="card-header">
@@ -35,30 +71,166 @@ const Dashboard = () => {
                     </div>
                     <div className="stats-container">
                         <div className="stat-box">
-                            <span className="stat-number">--</span>
+                            <span className="stat-number">{stats.totalItems}</span>
                             <span className="stat-label">Items</span>
                         </div>
                         <div className="stat-box">
-                            <span className="stat-number">--</span>
-                            <span className="stat-label">Outfits</span>
+                            <span className="stat-number">{stats.totalCategories}</span>
+                            <span className="stat-label">Categories</span>
                         </div>
+                        <div className="stat-box">
+                            <span className="stat-number">{stats.unusedCount || 0}</span>
+                            <span className="stat-label">Never Worn</span>
+                        </div>
+                    </div>
+                    {Object.keys(stats.categoryBreakdown).length > 0 && (
+                        <div className="category-pills">
+                            {Object.entries(stats.categoryBreakdown).map(([cat, count]) => (
+                                <span key={cat} className="tag">{cat}: {count}</span>
+                            ))}
+                        </div>
+                    )}
+                    {Object.keys(stats.seasonBreakdown || {}).length > 0 && (
+                        <div className="category-pills" style={{ marginTop: '0.5rem' }}>
+                            {Object.entries(stats.seasonBreakdown).map(([season, count]) => (
+                                <span key={season} className="tag season-tag">{season}: {count}</span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Most Worn Items */}
+                {stats.mostWorn?.length > 0 && (
+                    <div className="glass-card feature-card">
+                        <div className="card-header">
+                            <TrendingUp className="card-icon highlight" />
+                            <h3>Most Worn</h3>
+                        </div>
+                        <div className="analytics-items">
+                            {stats.mostWorn.map(item => (
+                                <div key={item._id} className="analytics-item">
+                                    <img src={item.imageUrl} alt={item.name || item.category} className="analytics-thumb" />
+                                    <div className="analytics-info">
+                                        <span className="analytics-name">{item.name || item.category}</span>
+                                        <span className="analytics-meta">{item.category}{item.type ? ` · ${item.type}` : ''}</span>
+                                        <span className="analytics-wear-count">{item.wearCount}× worn</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Least Worn / Unused Items */}
+                {(stats.leastWorn?.length > 0 || stats.unusedItems?.length > 0) && (
+                    <div className="glass-card feature-card">
+                        <div className="card-header">
+                            <AlertCircle className="card-icon" style={{ color: '#f59e0b' }} />
+                            <h3>Needs Attention</h3>
+                        </div>
+                        {stats.unusedItems?.length > 0 && (
+                            <>
+                                <p className="analytics-subtitle">Never worn ({stats.unusedCount} total)</p>
+                                <div className="analytics-items">
+                                    {stats.unusedItems.map(item => (
+                                        <div key={item._id} className="analytics-item faded">
+                                            <img src={item.imageUrl} alt={item.name || item.category} className="analytics-thumb" />
+                                            <div className="analytics-info">
+                                                <span className="analytics-name">{item.name || item.category}</span>
+                                                <span className="analytics-meta">{item.category}{item.color ? ` · ${item.color}` : ''}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                        {stats.leastWorn?.length > 0 && (
+                            <>
+                                <p className="analytics-subtitle" style={{ marginTop: '0.75rem' }}>Least worn</p>
+                                <div className="analytics-items">
+                                    {stats.leastWorn.map(item => (
+                                        <div key={item._id} className="analytics-item">
+                                            <img src={item.imageUrl} alt={item.name || item.category} className="analytics-thumb" />
+                                            <div className="analytics-info">
+                                                <span className="analytics-name">{item.name || item.category}</span>
+                                                <span className="analytics-meta">{item.category} · {item.wearCount}× worn</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* Upcoming Events & Festivals Card */}
+                <div className="glass-card feature-card events-card">
+                    <div className="card-header">
+                        <Calendar className="card-icon highlight" />
+                        <h3>Upcoming Festivals & Events</h3>
+                    </div>
+                    {upcomingEvents.length === 0 ? (
+                        <p style={{ color: 'var(--text-secondary)' }}>No upcoming events found.</p>
+                    ) : (
+                        <ul className="event-list">
+                            {upcomingEvents.map((event, idx) => (
+                                <li key={idx} className="event-item-card">
+                                    <div className="event-left">
+                                        <PartyPopper size={18} className="event-icon" />
+                                        <div>
+                                            <span className="event-name">{event.name}</span>
+                                            <span className="event-date">
+                                                {event.date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        to={`/stylist?occasion=${encodeURIComponent(event.name + ' festival - ' + event.style + ' style')}`}
+                                        className="event-style-btn"
+                                    >
+                                        Style Me
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+
+                {/* AI Quick Suggestions Card */}
+                <div className="glass-card feature-card ai-card">
+                    <div className="card-header">
+                        <Sparkles className="card-icon highlight" />
+                        <h3>Style Ideas</h3>
+                    </div>
+                    <p className="ai-card-desc">Tap a quick prompt to get instant AI outfit recommendations.</p>
+                    <div className="quick-prompts">
+                        <Link to="/stylist?occasion=casual%20day%20at%20home" className="quick-prompt-chip">🏠 Casual day at home</Link>
+                        <Link to="/stylist?occasion=outdoor%20brunch%20with%20friends" className="quick-prompt-chip">☀️ Outdoor brunch</Link>
+                        <Link to="/stylist?occasion=important%20office%20meeting" className="quick-prompt-chip">💼 Office meeting</Link>
+                        <Link to="/stylist?occasion=romantic%20dinner%20date" className="quick-prompt-chip">🌹 Dinner date</Link>
+                        <Link to="/stylist?occasion=Holi%20festival%20-%20ethnic%20style" className="quick-prompt-chip">🎨 Holi festival</Link>
+                        <Link to="/stylist?occasion=gothic%20party%20night" className="quick-prompt-chip">🖤 Gothic night</Link>
                     </div>
                 </div>
 
-                {/* Upcoming Event Card */}
+                {/* Quick Actions Card */}
                 <div className="glass-card feature-card">
                     <div className="card-header">
-                        <Calendar className="card-icon" />
-                        <h3>Upcoming Events</h3>
+                        <ShoppingBag className="card-icon" />
+                        <h3>Quick Actions</h3>
                     </div>
                     <ul className="event-list">
                         <li>
                             <div className="event-dot"></div>
-                            <span>Dinner Party (Friday, 8pm)</span>
+                            <Link to="/wardrobe" style={{ color: 'inherit', textDecoration: 'none' }}>Add clothes to your wardrobe</Link>
                         </li>
                         <li>
                             <div className="event-dot"></div>
-                            <span>Outdoor Festival (Sunday)</span>
+                            <Link to="/stylist" style={{ color: 'inherit', textDecoration: 'none' }}>Ask AI for outfit ideas</Link>
+                        </li>
+                        <li>
+                            <div className="event-dot"></div>
+                            <Link to="/stylist?occasion=what%20should%20I%20wear%20today" style={{ color: 'inherit', textDecoration: 'none' }}>What should I wear today?</Link>
                         </li>
                     </ul>
                 </div>
@@ -73,32 +245,65 @@ const Navigation = () => {
 
     return (
         <nav className="glass-nav">
-            <div className="logo">
+            <Link to="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <Sparkles className="logo-icon" size={24} />
                 <span>ClosetMate</span>
-            </div>
+            </Link>
             <div className="nav-links">
                 <Link to="/" className={`nav-btn ${location.pathname === '/' ? 'active' : ''}`}>Dashboard</Link>
                 <Link to="/wardrobe" className={`nav-btn ${location.pathname === '/wardrobe' ? 'active' : ''}`}>Wardrobe</Link>
-                <button className="nav-btn" disabled>AI Stylist (Soon)</button>
+                <Link to="/stylist" className={`nav-btn ${location.pathname === '/stylist' ? 'active' : ''}`}>AI Stylist</Link>
             </div>
-            <div className="profile-placeholder"></div>
+            <ProfileMenu />
         </nav>
     );
+};
+
+// Protected App Shell — only visible when logged in
+const AppShell = () => {
+    return (
+        <div className="app-container">
+            <Navigation />
+            <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/wardrobe" element={<Wardrobe />} />
+                <Route path="/stylist" element={<Stylist />} />
+            </Routes>
+        </div>
+    );
+};
+
+// Root App — decides between Auth page and main app
+const AppRouter = () => {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div className="auth-page">
+                <div className="auth-brand">
+                    <Sparkles size={40} className="auth-logo-icon" />
+                    <h1 className="gradient-text">ClosetMate</h1>
+                    <p className="auth-tagline">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <AuthPage />;
+    }
+
+    return <AppShell />;
 };
 
 // Main App Wrapper
 function App() {
     return (
-        <Router>
-            <div className="app-container">
-                <Navigation />
-                <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/wardrobe" element={<Wardrobe />} />
-                </Routes>
-            </div>
-        </Router>
+        <AuthProvider>
+            <Router>
+                <AppRouter />
+            </Router>
+        </AuthProvider>
     );
 }
 
