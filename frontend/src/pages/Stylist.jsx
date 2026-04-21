@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun } from 'lucide-react';
+import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, PlaneTakeoff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
 import './Stylist.css';
@@ -38,11 +38,17 @@ const Stylist = () => {
 
     const [loading, setLoading] = useState(false);
     const [recommendation, setRecommendation] = useState(null);
+    const [packingRecommendation, setPackingRecommendation] = useState(null);
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState('freetext'); // 'freetext' | 'generator'
+    const [activeTab, setActiveTab] = useState('freetext'); // 'freetext' | 'generator' | 'packing'
     const [logLoading, setLogLoading] = useState(false);
     const [logSuccess, setLogSuccess] = useState(false);
     const [loggedOccasion, setLoggedOccasion] = useState('');
+
+    // Packing List mode
+    const [tripDestination, setTripDestination] = useState('');
+    const [tripDuration, setTripDuration] = useState('3');
+    const [tripActivities, setTripActivities] = useState('');
 
     // Auto-populate weather dropdown with live season when weather loads
     useEffect(() => {
@@ -84,6 +90,39 @@ const Stylist = () => {
         }
     };
 
+    const callPackingList = async (body) => {
+        setLoading(true);
+        setError('');
+        setPackingRecommendation(null);
+        try {
+            const res = await fetch('http://localhost:5001/api/stylist/packing-list', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to generate packing list');
+            
+            // Map the returned populatedItems to easily readable dictionaries
+            const itemMap = {};
+            if (data.populatedItems) {
+                data.populatedItems.forEach(item => {
+                    itemMap[item._id] = item;
+                });
+            }
+            data.itemMap = itemMap;
+            
+            setPackingRecommendation(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Build a concise live weather context string to append to AI prompts
     const liveWeatherContext = weather
         ? `Current real-world weather: ${Math.round(weather.main.temp)}°C, ${weather.weather[0].description} in ${weather.name}. Humidity: ${weather.main.humidity}%. Please factor this into your outfit recommendation.`
@@ -114,6 +153,16 @@ const Stylist = () => {
             ? `${label}. ${liveWeatherContext}`
             : label;
         callStylist({ occasion: fullOccasion, season: liveSeason });
+    };
+
+    const handlePackingSubmit = (e) => {
+        e.preventDefault();
+        if (!tripDestination || !tripDuration) return;
+        callPackingList({
+            destination: tripDestination,
+            duration: parseInt(tripDuration, 10),
+            activities: tripActivities
+        });
     };
 
     // Build a slot→item map from outfitBreakdown + full outfit array
@@ -189,11 +238,14 @@ const Stylist = () => {
 
             {/* Tabs */}
             <div className="stylist-tabs">
-                <button className={`tab-btn ${activeTab === 'freetext' ? 'tab-active' : ''}`} onClick={() => setActiveTab('freetext')}>
+                <button className={`tab-btn ${activeTab === 'freetext' ? 'tab-active' : ''}`} onClick={() => { setActiveTab('freetext'); setPackingRecommendation(null); setRecommendation(null); setError(''); }}>
                     <Sparkles size={14} /> Free Text
                 </button>
-                <button className={`tab-btn ${activeTab === 'generator' ? 'tab-active' : ''}`} onClick={() => setActiveTab('generator')}>
+                <button className={`tab-btn ${activeTab === 'generator' ? 'tab-active' : ''}`} onClick={() => { setActiveTab('generator'); setPackingRecommendation(null); setRecommendation(null); setError(''); }}>
                     <Zap size={14} /> Outfit Generator
+                </button>
+                <button className={`tab-btn ${activeTab === 'packing' ? 'tab-active' : ''}`} onClick={() => { setActiveTab('packing'); setPackingRecommendation(null); setRecommendation(null); setError(''); }}>
+                    <PlaneTakeoff size={14} /> Pack for a Trip
                 </button>
             </div>
 
@@ -244,6 +296,51 @@ const Stylist = () => {
                             </div>
                             <button type="submit" className="cta-button gen-submit" disabled={loading}>
                                 {loading ? <Loader className="spin" size={20} /> : <><Zap size={18} /> Generate Outfit</>}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Pack for a Trip Input */}
+                {activeTab === 'packing' && (
+                    <div className="glass-card input-card generator-card">
+                        <form onSubmit={handlePackingSubmit} className="generator-form">
+                            <div className="gen-row">
+                                <div className="gen-field" style={{ flex: 1.5 }}>
+                                    <label>Destination</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. Goa, India" 
+                                        value={tripDestination} 
+                                        onChange={e => setTripDestination(e.target.value)} 
+                                        required
+                                    />
+                                </div>
+                                <div className="gen-field">
+                                    <label>Duration (Days)</label>
+                                    <input 
+                                        type="number" 
+                                        min="1" 
+                                        max="30" 
+                                        value={tripDuration} 
+                                        onChange={e => setTripDuration(e.target.value)} 
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="gen-row" style={{ marginTop: '1rem' }}>
+                                <div className="gen-field" style={{ width: '100%' }}>
+                                    <label>Planned Activities</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. Beach club, sightseeing, fancy dinner" 
+                                        value={tripActivities} 
+                                        onChange={e => setTripActivities(e.target.value)} 
+                                    />
+                                </div>
+                            </div>
+                            <button type="submit" className="cta-button gen-submit" disabled={loading || !tripDestination || !tripDuration}>
+                                {loading ? <Loader className="spin" size={20} /> : <><PlaneTakeoff size={18} /> Build Packing List</>}
                             </button>
                         </form>
                     </div>
@@ -337,6 +434,107 @@ const Stylist = () => {
                                         <div key={idx} className="glass-card shopping-card">
                                             <h4 className="shopping-item-name">{item.item}</h4>
                                             {item.slot && <span className="tag" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>For: {item.slot}</span>}
+                                            <p className="shopping-reason">{item.reason}</p>
+                                            <div className="shopping-where">
+                                                <strong>Where to buy:</strong>
+                                                <div className="shopping-links">
+                                                    {item.whereToBuy.map((store, sIdx) => (
+                                                        <a key={sIdx} href={store.url} target="_blank" rel="noopener noreferrer" className="store-link">
+                                                            {store.name} →
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {item.estimatedPrice && (
+                                                <p className="estimated-price">💰 Est. price: {item.estimatedPrice}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Packing List Results */}
+                {packingRecommendation && (
+                    <div className="recommendation-result animation-fade-in">
+                        {/* Rationale */}
+                        <div className="glass-card ai-rationale-card">
+                            <div className="rationale-header">
+                                <PlaneTakeoff className="highlight" size={20} />
+                                <h3>Stylist's Packing Strategy</h3>
+                            </div>
+                            <p className="rationale-text">{packingRecommendation.rationale}</p>
+                        </div>
+
+                        {/* Luggage Breakdown Category Lists */}
+                        <h3 className="outfit-heading">Your Luggage</h3>
+                        <div className="packing-lists-grid">
+                            {Object.entries(packingRecommendation.packingList).map(([category, ids]) => {
+                                if (!ids || ids.length === 0) return null;
+                                // Create a friendly title like "Tops" out of "tops" or "outerwearAndAccessories"
+                                const title = category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                
+                                return (
+                                    <div key={category} className="glass-card packing-category-card">
+                                        <h4>{title} ({ids.length})</h4>
+                                        <div className="packing-items">
+                                            {ids.map(id => {
+                                                const item = packingRecommendation.itemMap[id];
+                                                if (!item) return null;
+                                                return (
+                                                    <div key={id} className="packing-item-row">
+                                                        <img src={item.imageUrl} alt={item.category} className="packing-thumb" />
+                                                        <div className="packing-item-info">
+                                                            <span className="packing-item-name">{item.name || `${item.color} ${item.type || item.category}`}</span>
+                                                            <span className="packing-item-meta">{item.formality}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Day by Day Plan */}
+                        {packingRecommendation.dayByDay && packingRecommendation.dayByDay.length > 0 && (
+                            <>
+                                <h3 className="outfit-heading">Day-by-Day Outfit Plan</h3>
+                                <div className="day-by-day-stack">
+                                    {packingRecommendation.dayByDay.map(day => (
+                                        <div key={day.day} className="glass-card day-plan-card">
+                                            <div className="day-header">
+                                                <h4>Day {day.day}</h4>
+                                                <span className="day-theme">{day.theme}</span>
+                                            </div>
+                                            <div className="day-items-row">
+                                                {day.outfitIds.map(id => {
+                                                    const item = packingRecommendation.itemMap[id];
+                                                    if (!item) return null;
+                                                    return (
+                                                        <div key={id} className="day-item">
+                                                            <img src={item.imageUrl} alt={item.category} className="day-item-img" />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Shopping suggestions */}
+                        {packingRecommendation.shoppingSuggestions && packingRecommendation.shoppingSuggestions.length > 0 && (
+                            <div className="shopping-section">
+                                <h3 className="outfit-heading"><ShoppingBag size={20} /> Missing Items to Buy</h3>
+                                <div className="shopping-grid">
+                                    {packingRecommendation.shoppingSuggestions.map((item, idx) => (
+                                        <div key={idx} className="glass-card shopping-card">
+                                            <h4 className="shopping-item-name">{item.item}</h4>
                                             <p className="shopping-reason">{item.reason}</p>
                                             <div className="shopping-where">
                                                 <strong>Where to buy:</strong>

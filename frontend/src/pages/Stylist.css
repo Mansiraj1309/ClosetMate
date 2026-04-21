@@ -492,6 +492,112 @@
     animation: fadeIn 0.3s ease;
 }
 
+/* ── Packing List Results ────────────────── */
+
+.packing-lists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.packing-category-card {
+    padding: 1.25rem;
+}
+
+.packing-category-card h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 0.5rem;
+}
+
+.packing-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.packing-item-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    background: rgba(0,0,0,0.2);
+}
+
+.packing-thumb {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.packing-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.packing-item-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.packing-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.day-by-day-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.day-plan-card {
+    padding: 1.5rem;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.day-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.day-theme {
+    font-size: 0.9rem;
+    color: var(--accent-primary);
+    background: rgba(129, 140, 248, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+}
+
+.day-items-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.day-item-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
 /* ── Responsive ───────────────────────────── */
 
 @media (max-width: 640px) {

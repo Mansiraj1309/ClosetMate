@@ -133,4 +133,125 @@ Rules:
     }
 });
 
+// @route   POST /api/stylist/packing-list
+// @desc    Generate a packing list for a trip based on user's wardrobe
+router.post('/packing-list', auth, async (req, res) => {
+    try {
+        const { destination, duration, activities } = req.body;
+
+        if (!destination || !duration) {
+            return res.status(400).json({ message: 'Destination and duration are required' });
+        }
+
+        const wardrobeItems = await Item.find({ userId: req.userId });
+
+        if (wardrobeItems.length === 0) {
+            return res.status(400).json({
+                message: 'Your wardrobe is empty! Add some clothes first before planning a trip.'
+            });
+        }
+
+        const formattedWardrobe = wardrobeItems.map(item => ({
+            id: item._id,
+            name: item.name || '',
+            category: item.category,
+            type: item.type || '',
+            color: item.color,
+            season: item.season,
+            formality: item.formality,
+            occasions: item.occasions || [],
+            style: item.style || '',
+            wearCount: item.wearCount || 0
+        }));
+
+        const prompt = `
+You are an expert travel stylist and personal shopper. You will be provided with a JSON list of clothing items available in a user's digital wardrobe, alongside details about an upcoming trip.
+
+Trip Details:
+- Destination: ${destination}
+- Duration: ${duration} days
+- Planned Activities: ${activities || 'General sightseeing and relaxing'}
+
+Your goals:
+1. Build a smart, versatile packing list from their existing wardrobe. Pick items that mix and match well to save space.
+2. Group the items they need to pack into categories (Tops, Bottoms, Shoes, Outerwear/Accessories).
+3. Create a day-by-day outfit plan using the packed items, tailored to the destination and activities.
+4. If they are missing essential items for this specific trip (e.g., swimwear for a beach trip, snow boots for winter sports), suggest 1-3 specific items to BUY, including where to buy them in India with estimated prices in INR.
+
+Available Wardrobe (${wardrobeItems.length} items):
+${JSON.stringify(formattedWardrobe, null, 2)}
+
+Please return the response IN RAW JSON FORMAT EXACTLY like this structure, with no markdown code blocks or extra text:
+{
+  "rationale": "A stylish summary of your packing strategy for this trip.",
+  "packingList": {
+    "tops": ["id1", "id2"],
+    "bottoms": ["id3", "id4"],
+    "shoes": ["id5"],
+    "outerwearAndAccessories": ["id6"]
+  },
+  "dayByDay": [
+    {
+      "day": 1,
+      "theme": "Travel & Arrival",
+      "outfitIds": ["id1", "id3", "id5"]
+    },
+    {
+      "day": 2,
+      "theme": "Beach & Nightlife",
+      "outfitIds": ["id2", "id4", "id5", "id6"]
+    }
+  ],
+  "shoppingSuggestions": [
+    {
+      "item": "Name of missing item (e.g., 'Floral Swim trunks')",
+      "reason": "Why they need this for the trip",
+      "whereToBuy": [
+        { "name": "Myntra", "url": "https://www.myntra.com" }
+      ],
+      "estimatedPrice": "₹800 - ₹1,500"
+    }
+  ]
+}
+
+Rules:
+- All IDs in "packingList" and "dayByDay" MUST be valid IDs from the provided wardrobe JSON.
+- If the wardrobe already has everything needed, return an empty "shoppingSuggestions" array.
+- "dayByDay" should have an entry for each day of the trip (up to a max of 7 days if the trip is longer, just say "Day 1", etc.).
+- Prices should be in Indian Rupees (₹). Real stores only.
+`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        let aiText = response.text;
+        aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+        const parsedResponse = JSON.parse(aiText);
+
+        // Collect all unique IDs needed to fetch from DB
+        const allNeededIds = new Set();
+        Object.values(parsedResponse.packingList).flat().forEach(id => allNeededIds.add(id));
+        
+        const selectedItems = await Item.find({
+            '_id': { $in: Array.from(allNeededIds) },
+            userId: req.userId
+        });
+
+        res.json({
+            rationale: parsedResponse.rationale,
+            packingList: parsedResponse.packingList,
+            dayByDay: parsedResponse.dayByDay || [],
+            shoppingSuggestions: parsedResponse.shoppingSuggestions || [],
+            populatedItems: selectedItems // Send full item details to frontend to resolve IDs
+        });
+
+    } catch (err) {
+        console.error('AI Packing List Error:', err);
+        res.status(500).json({ message: 'Failed to generate packing list. Check AI API Key or try again later.' });
+    }
+});
+
 module.exports = router;
