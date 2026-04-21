@@ -66,6 +66,10 @@ const itemSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    purchasePrice: {
+        type: Number,
+        default: null,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

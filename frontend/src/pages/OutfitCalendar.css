@@ -1,0 +1,371 @@
+.calendar-page {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.calendar-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.calendar-header .header-icon {
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+}
+
+.calendar-layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 860px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── react-calendar overrides ── */
+.calendar-wrapper {
+    padding: 1.25rem;
+    border-radius: 16px;
+}
+
+.react-calendar {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-primary) !important;
+    font-family: inherit !important;
+    width: 340px !important;
+}
+
+.react-calendar__navigation button {
+    color: var(--text-primary) !important;
+    font-size: 1rem !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    min-width: 36px !important;
+}
+
+.react-calendar__navigation button:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.react-calendar__month-view__weekdays {
+    color: var(--text-secondary) !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+}
+
+.react-calendar__tile {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-radius: 10px !important;
+    transition: background 0.15s !important;
+    position: relative !important;
+    padding-bottom: 24px !important;
+}
+
+.react-calendar__tile:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.react-calendar__tile--active,
+.react-calendar__tile--active:hover {
+    background: var(--accent) !important;
+    color: white !important;
+}
+
+.react-calendar__tile--now {
+    background: rgba(139, 92, 246, 0.2) !important;
+    font-weight: 700 !important;
+}
+
+.react-calendar__tile.has-log {
+    font-weight: 600;
+}
+
+.cal-dot-wrapper {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+}
+
+.cal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a78bfa;
+}
+
+.react-calendar__tile--active .cal-dot {
+    background: white;
+}
+
+.cal-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #a78bfa;
+}
+
+/* ── Side Panel ── */
+.log-panel {
+    border-radius: 16px;
+    padding: 1.5rem;
+    min-height: 360px;
+    transition: all 0.3s ease;
+}
+
+.panel-open {
+    animation: fadeSlideIn 0.25s ease;
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.panel-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0.15rem 0 0;
+}
+
+.icon-btn {
+    background: rgba(255,255,255,0.07);
+    border: none;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.14); }
+
+.log-occasion-tag {
+    display: inline-block;
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+}
+
+.log-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.log-item-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.15s;
+}
+
+.log-item-card:hover { transform: translateY(-2px); }
+
+.log-item-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.log-item-info {
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.log-item-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.log-item-cat {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+.log-notes {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.delete-log-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.delete-log-btn:hover { background: rgba(239, 68, 68, 0.22); }
+.delete-log-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.panel-placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.placeholder-icon {
+    opacity: 0.25;
+    margin-bottom: 0.5rem;
+}
+
+.panel-placeholder p {
+    margin: 0;
+    font-size: 0.9rem;
+    max-width: 220px;
+}
+
+.panel-placeholder .highlight {
+    color: #a78bfa;
+    font-size: 1.2rem;
+}
+
+.placeholder-hint {
+    font-size: 0.78rem !important;
+    opacity: 0.6;
+}
+
+/* ── Month Summary ── */
+.month-summary {
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.month-summary h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.log-count {
+    font-size: 0.78rem;
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    border-radius: 20px;
+    padding: 0.15rem 0.6rem;
+    font-weight: 500;
+}
+
+.month-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.month-log-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.month-log-row:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.month-log-date {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #a78bfa;
+    min-width: 52px;
+}
+
+.month-log-occasion {
+    flex: 1;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.month-log-thumbs {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.month-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.thumb-more {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 0 4px;
+}

@@ -125,6 +125,152 @@
   border-color: var(--accent-primary);
 }
 
+/* ── Image preview inside upload zone ──────── */
+
+.upload-btn-compact {
+  padding: 0.5rem;
+  min-height: 180px;
+  border-style: solid;
+  border-color: rgba(129, 140, 248, 0.25);
+}
+
+.upload-preview-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.upload-preview-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: var(--border-radius-sm);
+  display: block;
+}
+
+.bg-removed-badge {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(16, 185, 129, 0.88);
+  color: white;
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Background removal button ───────────────── */
+
+.bgremove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 100px;
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bgremove-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(52, 211, 153, 0.75);
+  transform: translateY(-1px);
+}
+
+.bgremove-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bg-success-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: #34d399;
+  font-weight: 500;
+}
+
+.bg-redo-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.bg-redo-btn:hover { color: var(--text-primary); }
+
+/* ── AI Auto-tag button ──────────────────── */
+
+.autotag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 100px;
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  background: rgba(139, 92, 246, 0.13);
+  color: #c4b5fd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.autotag-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(167, 139, 250, 0.75);
+  transform: translateY(-1px);
+}
+
+.autotag-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.autotag-loading {
+  cursor: wait;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.autotag-error {
+  font-size: 0.78rem;
+  color: #f87171;
+  margin: 0.35rem 0 0;
+}
+
+
+
 /* ── Occasion chip grid ──────────────────── */
 
 .chip-grid {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Sparkles, Loader, ShoppingBag, Zap } from 'lucide-react';
+import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useWeather } from '../context/WeatherContext';
 import './Stylist.css';
 
 const QUICK_PROMPTS = [
@@ -24,6 +25,7 @@ const SLOT_LABELS = { top: '👕 Top', bottom: '👖 Bottom', shoes: '👟 Shoes
 
 const Stylist = () => {
     const { token } = useAuth();
+    const { weather, season: liveSeason } = useWeather();
     const [searchParams] = useSearchParams();
 
     // Free-text mode
@@ -38,6 +40,16 @@ const Stylist = () => {
     const [recommendation, setRecommendation] = useState(null);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('freetext'); // 'freetext' | 'generator'
+    const [logLoading, setLogLoading] = useState(false);
+    const [logSuccess, setLogSuccess] = useState(false);
+    const [loggedOccasion, setLoggedOccasion] = useState('');
+
+    // Auto-populate weather dropdown with live season when weather loads
+    useEffect(() => {
+        if (liveSeason && liveSeason !== 'All Season') {
+            setGenWeather(liveSeason);
+        }
+    }, [liveSeason]);
 
     useEffect(() => {
         const fromUrl = searchParams.get('occasion');
@@ -51,6 +63,8 @@ const Stylist = () => {
         setLoading(true);
         setError('');
         setRecommendation(null);
+        setLogSuccess(false);
+        setLoggedOccasion(body.occasion || '');
         try {
             const res = await fetch('http://localhost:5001/api/stylist/recommend', {
                 method: 'POST',
@@ -70,22 +84,36 @@ const Stylist = () => {
         }
     };
 
+    // Build a concise live weather context string to append to AI prompts
+    const liveWeatherContext = weather
+        ? `Current real-world weather: ${Math.round(weather.main.temp)}°C, ${weather.weather[0].description} in ${weather.name}. Humidity: ${weather.main.humidity}%. Please factor this into your outfit recommendation.`
+        : null;
+
     const handleFreeTextSubmit = (e) => {
         e.preventDefault();
         if (!occasion.trim()) return;
-        callStylist({ occasion });
+        const fullOccasion = liveWeatherContext
+            ? `${occasion}. ${liveWeatherContext}`
+            : occasion;
+        callStylist({ occasion: fullOccasion, season: liveSeason });
     };
 
     const handleGeneratorSubmit = (e) => {
         e.preventDefault();
-        const prompt = `${genOccasion} outfit${genStyle ? ` in ${genStyle} style` : ''}, weather: ${genWeather}`;
-        callStylist({ occasion: prompt, season: genWeather, style: genStyle });
+        const basePrompt = `${genOccasion} outfit${genStyle ? ` in ${genStyle} style` : ''}, weather: ${genWeather}`;
+        const fullPrompt = liveWeatherContext
+            ? `${basePrompt}. ${liveWeatherContext}`
+            : basePrompt;
+        callStylist({ occasion: fullPrompt, season: genWeather, style: genStyle });
     };
 
     const handleQuickPrompt = (label) => {
         setOccasion(label);
         setActiveTab('freetext');
-        callStylist({ occasion: label });
+        const fullOccasion = liveWeatherContext
+            ? `${label}. ${liveWeatherContext}`
+            : label;
+        callStylist({ occasion: fullOccasion, season: liveSeason });
     };
 
     // Build a slot→item map from outfitBreakdown + full outfit array
@@ -100,6 +128,34 @@ const Stylist = () => {
     }
     const hasSlotMap = Object.keys(outfitSlotMap).length > 0;
 
+    const handleLogOutfit = async () => {
+        if (!recommendation?.outfit?.length) return;
+        setLogLoading(true);
+        try {
+            const itemIds = recommendation.outfit.map(i => i._id);
+            const res = await fetch('http://localhost:5001/api/logs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    date: new Date().toISOString().split('T')[0],
+                    occasion: loggedOccasion,
+                    itemIds,
+                }),
+            });
+            if (res.ok) {
+                setLogSuccess(true);
+                setTimeout(() => setLogSuccess(false), 4000);
+            }
+        } catch (err) {
+            console.error('Error logging outfit:', err);
+        } finally {
+            setLogLoading(false);
+        }
+    };
+
     return (
         <div className="stylist-page">
             <header className="stylist-header">
@@ -107,6 +163,20 @@ const Stylist = () => {
                 <h1 className="gradient-text">Your Personal AI Stylist</h1>
                 <p className="subtitle">Tell me what you're dressing for, and I'll curate the perfect look from your closet.</p>
             </header>
+
+            {/* Live Weather Pill */}
+            {weather && (
+                <div className="stylist-weather-pill">
+                    <CloudSun size={16} />
+                    <span>
+                        <strong>{Math.round(weather.main.temp)}°C</strong>
+                        {' · '}{weather.weather[0].description}
+                        {' · '}<span style={{ opacity: 0.75 }}>📍 {weather.name}</span>
+                    </span>
+                    <span className="weather-pill-badge">{liveSeason}</span>
+                    <span className="weather-pill-hint">AI outfit picks will factor in today's weather ✓</span>
+                </div>
+            )}
 
             {/* Quick Prompt Buttons */}
             <div className="quick-prompt-row">
@@ -191,6 +261,25 @@ const Stylist = () => {
                                 <h3>Stylist's Thoughts</h3>
                             </div>
                             <p className="rationale-text">{recommendation.rationale}</p>
+                            {/* Log Outfit Button */}
+                            <div className="log-outfit-row">
+                                {logSuccess ? (
+                                    <div className="log-success-toast">
+                                        <CheckCircle size={16} /> Outfit logged to your calendar!
+                                    </div>
+                                ) : (
+                                    <button
+                                        className="log-outfit-btn"
+                                        onClick={handleLogOutfit}
+                                        disabled={logLoading}
+                                    >
+                                        {logLoading
+                                            ? <Loader size={15} className="spin" />
+                                            : <CalendarCheck size={15} />}
+                                        {logLoading ? 'Logging…' : '📅 Log This Outfit'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Outfit Breakdown (structured slots) */}

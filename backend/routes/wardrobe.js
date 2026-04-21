@@ -3,6 +3,9 @@ const router = express.Router();
 const { upload } = require('../config/cloudinary');
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
+const { GoogleGenAI } = require('@google/genai');
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // All wardrobe routes are now protected — user must be logged in
 
@@ -12,7 +15,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     try {
         const {
             name, category, type, color, season, formality,
-            occasions, style, gender, tags, styleNotes
+            occasions, style, gender, tags, styleNotes, purchasePrice
         } = req.body;
 
         if (!req.file) {
@@ -44,6 +47,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
             gender: gender || 'Unisex',
             tags: parsedTags,
             styleNotes: styleNotes || '',
+            purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
         });
 
         const savedItem = await newItem.save();
@@ -95,7 +99,7 @@ router.put('/:id', auth, async (req, res) => {
     try {
         const {
             name, category, type, color, season, formality,
-            occasions, style, gender, tags, styleNotes
+            occasions, style, gender, tags, styleNotes, purchasePrice
         } = req.body;
 
         // Parse JSON arrays sent as strings
@@ -120,6 +124,7 @@ router.put('/:id', auth, async (req, res) => {
         if (styleNotes !== undefined) updates.styleNotes = styleNotes;
         if (parsedOccasions !== undefined) updates.occasions = parsedOccasions;
         if (parsedTags !== undefined) updates.tags = parsedTags;
+        if (purchasePrice !== undefined) updates.purchasePrice = purchasePrice ? parseFloat(purchasePrice) : null;
 
         const item = await Item.findOneAndUpdate(
             { _id: req.params.id, userId: req.userId },
@@ -165,6 +170,50 @@ router.delete('/:id', auth, async (req, res) => {
     } catch (err) {
         console.error('Error deleting item:', err);
         res.status(500).json({ message: 'Server error deleting item' });
+    }
+});
+
+// @route   POST /api/wardrobe/analyze-image
+// @desc    Use Gemini Vision to auto-tag a clothing item from its base64 image
+router.post('/analyze-image', auth, async (req, res) => {
+    try {
+        const { imageBase64, mimeType } = req.body;
+        if (!imageBase64 || !mimeType) {
+            return res.status(400).json({ message: 'imageBase64 and mimeType are required' });
+        }
+
+        const prompt = `You are a fashion tagging AI. Analyze this clothing image and return structured metadata.
+
+Return ONLY a raw JSON object (no markdown, no backticks) with EXACTLY these fields:
+{
+  "category": one of ["Tops", "Bottoms", "Dresses / Suits", "Outerwear", "Shoes", "Accessories", "Activewear", "Ethnic"],
+  "type": specific sub-type (e.g. "T-shirt", "Jeans", "Sneakers", "Kurta" etc.),
+  "color": primary color (one of: Black, White, Blue, Red, Green, Beige, Brown, Grey, Navy, Pink, Yellow, Orange, Purple, Maroon, Olive, Teal — or a descriptive color name if none match),
+  "season": one of ["All Season", "Summer", "Winter", "Rainy"],
+  "formality": one of ["Casual", "Smart Casual", "Formal", "Party", "Ethnic"],
+  "style": one of ["Minimal", "Streetwear", "Sporty", "Elegant", "Vintage", "Classic", "Boho", "Formal", "Casual"] or empty string,
+  "occasions": array of applicable occasions from ["Casual", "Office", "Business", "Party", "Wedding", "Date Night", "Festival", "Travel", "Gym", "College"],
+  "styleNotes": a single short sentence describing styling tips for this item
+}`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                {
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType, data: imageBase64 } }
+                    ]
+                }
+            ],
+        });
+
+        let aiText = response.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const tags = JSON.parse(aiText);
+        res.json(tags);
+    } catch (err) {
+        console.error('Auto-tag error:', err);
+        res.status(500).json({ message: 'Failed to analyze image. Try tagging manually.' });
     }
 });
 

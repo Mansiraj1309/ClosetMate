@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
-import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle, CloudSun, Loader, BarChart2, CalendarDays } from 'lucide-react';
 import Wardrobe from './pages/Wardrobe';
 import Stylist from './pages/Stylist';
 import AuthPage from './pages/AuthPage';
+import OutfitCalendar from './pages/OutfitCalendar';
+import Analytics from './pages/Analytics';
 import ProfileMenu from './components/ProfileMenu';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { WeatherProvider, useWeather } from './context/WeatherContext';
 import './index.css';
 
 // Helper: Get upcoming Indian festivals & global events
@@ -23,6 +26,70 @@ const getUpcomingEvents = () => {
         { name: 'New Year\'s Eve', date: new Date(year, 11, 31), style: 'party', tip: 'Your best party look — sequins, black, or metallics.' },
     ];
     return events.filter(e => e.date >= now).slice(0, 3);
+};
+
+// Weather condition to outfit emoji
+const weatherToEmoji = (main) => {
+    const map = { Clear: '☀️', Clouds: '⛅', Rain: '🌧️', Drizzle: '🌦️', Thunderstorm: '⛈️', Snow: '❄️', Mist: '🌫️', Haze: '🌫️', Fog: '🌫️' };
+    return map[main] || '🌤️';
+};
+
+// WeatherCard component — reads from shared WeatherContext (no duplicate fetch)
+const WeatherCard = () => {
+    const { weather, loading, error } = useWeather();
+
+    if (loading) return (
+        <div className="glass-card feature-card weather-card">
+            <div className="card-header">
+                <CloudSun className="card-icon highlight" />
+                <h3>Today's Weather</h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                <Loader size={16} className="spin-anim" /> Detecting location…
+            </div>
+        </div>
+    );
+
+    if (error || !weather) return null;
+
+    const temp = Math.round(weather.main.temp);
+    const feelsLike = Math.round(weather.main.feels_like);
+    const condition = weather.weather[0].main;
+    const description = weather.weather[0].description;
+    const city = weather.name;
+    const emoji = weatherToEmoji(condition);
+
+    const stylistPrompt = `Outdoor casual outfit for ${temp}°C ${description} weather in ${city} today`;
+
+    return (
+        <div className="glass-card feature-card weather-card">
+            <div className="card-header">
+                <CloudSun className="card-icon highlight" />
+                <h3>Today's Weather</h3>
+            </div>
+            <div className="weather-body">
+                <div className="weather-main">
+                    <span className="weather-emoji">{emoji}</span>
+                    <div className="weather-temp-block">
+                        <span className="weather-temp">{temp}°C</span>
+                        <span className="weather-desc">{description}</span>
+                        <span className="weather-city">📍 {city}</span>
+                    </div>
+                </div>
+                <div className="weather-feels">
+                    <span>Feels like <strong>{feelsLike}°C</strong></span>
+                    <span>Humidity <strong>{weather.main.humidity}%</strong></span>
+                </div>
+                <Link
+                    to={`/stylist?occasion=${encodeURIComponent(stylistPrompt)}`}
+                    className="cta-button secondary-btn weather-style-btn"
+                    style={{ textDecoration: 'none', fontSize: '0.85rem', padding: '0.55rem 1rem' }}
+                >
+                    <Sparkles size={15} /> Style Me for Today
+                </Link>
+            </div>
+        </div>
+    );
 };
 
 // Dashboard Component
@@ -61,6 +128,9 @@ const Dashboard = () => {
                     </Link>
                 </div>
             </header>
+
+            {/* Weather Card */}
+                <WeatherCard />
 
             <section className="dashboard-grid">
                 {/* Wardrobe Stats Card */}
@@ -230,6 +300,14 @@ const Dashboard = () => {
                         </li>
                         <li>
                             <div className="event-dot"></div>
+                            <Link to="/calendar" style={{ color: 'inherit', textDecoration: 'none' }}>View outfit calendar</Link>
+                        </li>
+                        <li>
+                            <div className="event-dot"></div>
+                            <Link to="/analytics" style={{ color: 'inherit', textDecoration: 'none' }}>Wardrobe analytics</Link>
+                        </li>
+                        <li>
+                            <div className="event-dot"></div>
                             <Link to="/stylist?occasion=what%20should%20I%20wear%20today" style={{ color: 'inherit', textDecoration: 'none' }}>What should I wear today?</Link>
                         </li>
                     </ul>
@@ -253,6 +331,8 @@ const Navigation = () => {
                 <Link to="/" className={`nav-btn ${location.pathname === '/' ? 'active' : ''}`}>Dashboard</Link>
                 <Link to="/wardrobe" className={`nav-btn ${location.pathname === '/wardrobe' ? 'active' : ''}`}>Wardrobe</Link>
                 <Link to="/stylist" className={`nav-btn ${location.pathname === '/stylist' ? 'active' : ''}`}>AI Stylist</Link>
+                <Link to="/calendar" className={`nav-btn ${location.pathname === '/calendar' ? 'active' : ''}`}>Calendar</Link>
+                <Link to="/analytics" className={`nav-btn ${location.pathname === '/analytics' ? 'active' : ''}`}>Analytics</Link>
             </div>
             <ProfileMenu />
         </nav>
@@ -268,6 +348,8 @@ const AppShell = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/wardrobe" element={<Wardrobe />} />
                 <Route path="/stylist" element={<Stylist />} />
+                <Route path="/calendar" element={<OutfitCalendar />} />
+                <Route path="/analytics" element={<Analytics />} />
             </Routes>
         </div>
     );
@@ -300,9 +382,11 @@ const AppRouter = () => {
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <AppRouter />
-            </Router>
+            <WeatherProvider>
+                <Router>
+                    <AppRouter />
+                </Router>
+            </WeatherProvider>
         </AuthProvider>
     );
 }

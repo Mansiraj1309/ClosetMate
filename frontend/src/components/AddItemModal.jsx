@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Upload, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Upload, X, Sparkles, Loader, Image, CheckCircle } from 'lucide-react';
 import './AddItemModal.css';
+
+// ── Background removal — local npm package ────────────────────────
+// @imgly/background-removal is now installed locally (no CDN needed)
+import { removeBackground } from '@imgly/background-removal';
 
 // ── Dropdown options ──────────────────────────────────────────
 
@@ -44,12 +48,20 @@ const INITIAL_FORM = {
     style: '',
     tags: '',
     styleNotes: '',
+    purchasePrice: '',
 };
 
 const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => {
-    const [file, setFile] = useState(null);
+    const [file, setFile] = useState(null);               // raw file from picker
+    const [processedFile, setProcessedFile] = useState(null); // after bg removal
+    const [previewUrl, setPreviewUrl] = useState(null);   // canvas preview
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAutoTagging, setIsAutoTagging] = useState(false);
+    const [isRemovingBg, setIsRemovingBg] = useState(false);
+    const [bgRemoved, setBgRemoved] = useState(false);
+    const [bgError, setBgError] = useState('');
+    const [autoTagError, setAutoTagError] = useState('');
 
     const isEditMode = Boolean(editItem);
 
@@ -70,11 +82,18 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 style: editItem.style || '',
                 tags: (editItem.tags || []).join(', '),
                 styleNotes: editItem.styleNotes || '',
+                purchasePrice: editItem.purchasePrice || '',
             });
             setFile(null);
+            setProcessedFile(null);
+            setPreviewUrl(null);
+            setBgRemoved(false);
         } else {
             setFormData(INITIAL_FORM);
             setFile(null);
+            setProcessedFile(null);
+            setPreviewUrl(null);
+            setBgRemoved(false);
         }
     }, [editItem]);
 
@@ -106,14 +125,122 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
     };
 
     const handleFileChange = (e) => {
-        if (e.target.files[0]) setFile(e.target.files[0]);
+        if (e.target.files[0]) {
+            const picked = e.target.files[0];
+            setFile(picked);
+            setProcessedFile(null);
+            setPreviewUrl(URL.createObjectURL(picked));
+            setBgRemoved(false);
+            setBgError('');
+            setAutoTagError('');
+        }
+    };
+
+    // ── Background removal helper ─────────────────────────────
+    const handleRemoveBackground = async () => {
+        if (!file) return;
+        setIsRemovingBg(true);
+        setBgError('');
+        try {
+            // Run bg removal using locally installed package
+            // Returns a Blob with transparent background (PNG)
+            const blob = await removeBackground(file, {
+                model: 'medium',
+            });
+
+            // Composite onto a clean off-white canvas
+            const img = new window.Image();
+            const objectUrl = URL.createObjectURL(blob);
+            img.src = objectUrl;
+            await new Promise(resolve => img.onload = resolve);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+
+            // Fill with clean off-white background (matches wardrobe card style)
+            ctx.fillStyle = '#f7f7f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the cutout on top
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(objectUrl);
+
+            // Convert canvas to a new File
+            canvas.toBlob(async (finalBlob) => {
+                const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+                setProcessedFile(cleanFile);
+                setPreviewUrl(canvas.toDataURL('image/jpeg', 0.92));
+                setBgRemoved(true);
+                setIsRemovingBg(false);
+            }, 'image/jpeg', 0.92);
+        } catch (err) {
+            console.error('BG removal error:', err);
+            setBgError('Could not remove background. Check your connection (CDN model needed).');
+            setIsRemovingBg(false);
+        }
+    };
+
+    // The file to actually upload: processed (bg removed) or original
+    const uploadFile = processedFile || file;
+
+    const handleAutoTag = async () => {
+        if (!uploadFile) return;
+        setIsAutoTagging(true);
+        setAutoTagError('');
+        try {
+            const reader = new FileReader();
+            reader.readAsDataURL(uploadFile);
+            reader.onload = async () => {
+                const base64Full = reader.result;
+                const [meta, imageBase64] = base64Full.split(',');
+                const mimeType = meta.match(/:(.*?);/)[1];
+
+                const res = await fetch('http://localhost:5001/api/wardrobe/analyze-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ imageBase64, mimeType }),
+                });
+
+                if (res.ok) {
+                    const tags = await res.json();
+                    setFormData(prev => ({
+                        ...prev,
+                        category: tags.category || prev.category,
+                        type: tags.type || prev.type,
+                        color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
+                        customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
+                        season: tags.season || prev.season,
+                        formality: tags.formality || prev.formality,
+                        style: tags.style || prev.style,
+                        occasions: tags.occasions || prev.occasions,
+                        styleNotes: tags.styleNotes || prev.styleNotes,
+                    }));
+                } else {
+                    const err = await res.json();
+                    setAutoTagError(err.message || 'Auto-tagging failed.');
+                }
+                setIsAutoTagging(false);
+            };
+            reader.onerror = () => {
+                setAutoTagError('Could not read file.');
+                setIsAutoTagging(false);
+            };
+        } catch (err) {
+            setAutoTagError('Auto-tagging failed. Try manually.');
+            setIsAutoTagging(false);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // For new items, image is required
-        if (!isEditMode && !file) { alert("Please upload an image first!"); return; }
+        if (!isEditMode && !uploadFile) { alert("Please upload an image first!"); return; }
 
         setIsSubmitting(true);
 
@@ -141,6 +268,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                         style: formData.style,
                         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
                         styleNotes: formData.styleNotes,
+                        purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : null,
                     }),
                 });
 
@@ -154,7 +282,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
             } else {
                 // POST FormData for new item
                 const payload = new FormData();
-                payload.append('image', file);
+                payload.append('image', uploadFile);  // use processed file if bg was removed
                 payload.append('name', formData.name);
                 payload.append('category', formData.category);
                 payload.append('type', formData.type);
@@ -166,6 +294,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 payload.append('style', formData.style);
                 payload.append('tags', formData.tags);
                 payload.append('styleNotes', formData.styleNotes);
+                if (formData.purchasePrice) payload.append('purchasePrice', formData.purchasePrice);
 
                 res = await fetch('http://localhost:5001/api/wardrobe', {
                     method: 'POST',
@@ -201,11 +330,63 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                     {/* Image upload — only for new items */}
                     {!isEditMode && (
                         <div className="form-group file-upload">
-                            <label htmlFor="file-upload" className="upload-btn">
-                                <Upload size={20} />
-                                {file ? file.name : 'Upload Image'}
+                            {/* Upload / Preview area */}
+                            <label htmlFor="file-upload" className={`upload-btn ${previewUrl ? 'upload-btn-compact' : ''}`}>
+                                {previewUrl ? (
+                                    <div className="upload-preview-wrap">
+                                        <img src={previewUrl} alt="preview" className="upload-preview-img" />
+                                        {bgRemoved && (
+                                            <div className="bg-removed-badge">
+                                                <CheckCircle size={13} /> Clean Background
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <><Upload size={20} /> Upload or Capture Photo</>
+                                )}
                             </label>
-                            <input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            <input id="file-upload" type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
+
+                            {/* Background removal button */}
+                            {file && !bgRemoved && (
+                                <button
+                                    type="button"
+                                    className={`bgremove-btn ${isRemovingBg ? 'bgremove-loading' : ''}`}
+                                    onClick={handleRemoveBackground}
+                                    disabled={isRemovingBg}
+                                >
+                                    {isRemovingBg ? (
+                                        <><Loader size={15} className="spin-icon" /> Removing background…</>
+                                    ) : (
+                                        <><Image size={15} /> 🪄 Remove Background</>
+                                    )}
+                                </button>
+                            )}
+                            {bgRemoved && (
+                                <div className="bg-success-note">
+                                    <CheckCircle size={14} /> Background removed ✓ &nbsp;
+                                    <button type="button" className="bg-redo-btn" onClick={() => { setBgRemoved(false); setProcessedFile(null); setPreviewUrl(URL.createObjectURL(file)); }}>
+                                        Undo
+                                    </button>
+                                </div>
+                            )}
+                            {bgError && <p className="autotag-error">{bgError}</p>}
+
+                            {/* Auto-tag button */}
+                            {file && (
+                                <button
+                                    type="button"
+                                    className={`autotag-btn ${isAutoTagging ? 'autotag-loading' : ''}`}
+                                    onClick={handleAutoTag}
+                                    disabled={isAutoTagging || isRemovingBg}
+                                >
+                                    {isAutoTagging
+                                        ? <><Loader size={15} className="spin-icon" /> Analyzing…</>
+                                        : <><Sparkles size={15} /> ✨ Auto-tag with AI</>
+                                    }
+                                </button>
+                            )}
+                            {autoTagError && <p className="autotag-error">{autoTagError}</p>}
                         </div>
                     )}
                     {isEditMode && editItem.imageUrl && (
@@ -308,6 +489,18 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                     <div className="form-group">
                         <label>Notes (optional)</label>
                         <input type="text" name="styleNotes" placeholder="e.g. Goes great with white sneakers" value={formData.styleNotes} onChange={handleChange} />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Purchase Price (₹) <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional, for cost-per-wear analytics</span></label>
+                        <input
+                            type="number"
+                            name="purchasePrice"
+                            placeholder="e.g. 1299"
+                            value={formData.purchasePrice}
+                            onChange={handleChange}
+                            min="0"
+                        />
                     </div>
 
                     <button type="submit" className="cta-button submit-btn" disabled={isSubmitting}>
