@@ -262,3 +262,186 @@
     font-size: 0.8rem;
     color: #fbbf24;
 }
+
+/* ── Budget Tracker ── */
+.budget-section {
+    grid-column: 1 / -1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.5), rgba(20, 20, 25, 0.8));
+    border: 1px solid var(--border);
+}
+
+.budget-tracker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.budget-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.budget-spend {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+}
+
+.budget-total {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+}
+
+.budget-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.budget-bar-bg {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.budget-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 6px;
+    transition: width 0.5s ease-out;
+}
+
+.budget-bar-fill.over-budget {
+    background: #ef4444; /* red */
+}
+
+.budget-warning {
+    color: #ef4444;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+}
+
+.budget-success {
+    color: #34d399; /* green */
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.edit-budget-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.budget-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    width: 180px;
+}
+
+.budget-btn {
+    background: var(--accent-gradient);
+    border: none;
+    color: #fff;
+    padding: 0 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.budget-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.no-budget p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem 0;
+}
+
+/* ── Donation Nudge ── */
+.donation-section {
+    grid-column: 1 / -1;
+    margin-bottom: 1.5rem;
+    border: 1px dashed rgba(236, 72, 153, 0.4);
+    background: rgba(236, 72, 153, 0.03);
+}
+
+.donation-section .highlight {
+    color: #ec4899;
+}
+
+.donation-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+}
+
+.donation-grid {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    scrollbar-width: thin;
+}
+
+.donation-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 90px;
+    text-align: center;
+}
+
+.donation-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f7f7f5;
+    border: 1px solid var(--border);
+}
+
+.donation-item-name {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.donation-links {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.donate-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.donate-link:hover {
+    text-decoration: underline;
+}

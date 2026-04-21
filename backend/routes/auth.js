@@ -72,4 +72,22 @@ router.get('/me', auth, async (req, res) => {
     }
 });
 
+// @route   PUT /api/auth/budget
+// @desc    Update user monthly budget
+router.put('/budget', auth, async (req, res) => {
+    try {
+        const { budget } = req.body;
+        
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.budget = budget;
+        await user.save();
+
+        res.json({ message: 'Budget updated successfully', budget: user.budget });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error updating budget' });
+    }
+});
+
 module.exports = router;

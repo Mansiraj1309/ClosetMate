@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@imgly/background-removal": "^1.7.0",
+        "heic2any": "^0.0.4",
         "lucide-react": "^0.344.0",
         "react": "^18.2.0",
         "react-calendar": "^6.0.0",

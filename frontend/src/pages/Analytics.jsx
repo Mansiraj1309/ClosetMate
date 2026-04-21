@@ -4,7 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { BarChart2, Palette, TrendingUp, Sun, AlertCircle } from 'lucide-react';
+import { BarChart2, Palette, TrendingUp, Sun, AlertCircle, IndianRupee, HeartHandshake, Loader } from 'lucide-react';
 import './Analytics.css';
 
 // Color scheme for charts
@@ -21,9 +21,12 @@ const COLOR_HEX_MAP = {
 };
 
 const Analytics = () => {
-    const { token } = useAuth();
+    const { token, user, updateBudget } = useAuth();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    const [budgetInput, setBudgetInput] = useState('');
+    const [isUpdatingBudget, setIsUpdatingBudget] = useState(false);
 
     useEffect(() => {
         if (!token) return;
@@ -103,6 +106,51 @@ const Analytics = () => {
     const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
     const itemsWithPrice = items.filter(i => i.purchasePrice).length;
 
+    // ── Budget & Spend Tracking ─────────────────────────────────────────
+
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const thisMonthSpend = items.reduce((sum, item) => {
+        if (!item.purchasePrice || !item.purchaseDate) return sum;
+        const pDate = new Date(item.purchaseDate);
+        if (pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) {
+            return sum + item.purchasePrice;
+        }
+        return sum;
+    }, 0);
+
+    const budget = user?.budget;
+    const isOverBudget = budget ? thisMonthSpend > budget : false;
+    const budgetPercentage = Math.min(Math.round((thisMonthSpend / (budget || 1)) * 100), 100);
+
+    const handleSaveBudget = async () => {
+        if (!budgetInput) return;
+        setIsUpdatingBudget(true);
+        try {
+            await updateBudget(parseInt(budgetInput, 10));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsUpdatingBudget(false);
+            setBudgetInput('');
+        }
+    };
+
+    // ── Donation Candidates (1 year Rule) ───────────────────────────────
+
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    const donationCandidates = items.filter(item => {
+        if (item.wearCount === 0) {
+            const dateToCheck = item.purchaseDate ? new Date(item.purchaseDate) : new Date(item.createdAt);
+            return dateToCheck < oneYearAgo;
+        } else {
+            return item.lastWorn ? new Date(item.lastWorn) < oneYearAgo : false;
+        }
+    }).sort((a,b) => new Date(a.lastWorn || a.createdAt) - new Date(b.lastWorn || b.createdAt)).slice(0, 4);
+
     return (
         <div className="analytics-page">
             <header className="analytics-header">
@@ -130,6 +178,92 @@ const Analytics = () => {
                     <span className="summary-label">Unique Colors</span>
                 </div>
             </div>
+
+            {/* Budget & Spend Tracker Section */}
+            <div className="analytics-card glass-card budget-section">
+                <div className="ac-header" style={{ marginBottom: '1rem' }}>
+                    <IndianRupee size={22} className="ac-icon" />
+                    <h3>Monthly Clothing Budget</h3>
+                </div>
+                
+                {budget ? (
+                    <div className="budget-tracker">
+                        <div className="budget-stats">
+                            <div>
+                                <span className="budget-spend">₹{thisMonthSpend.toLocaleString('en-IN')}</span>
+                                <span className="budget-label">spent this month</span>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <span className="budget-total">₹{budget.toLocaleString('en-IN')}</span>
+                                <span className="budget-label">monthly budget</span>
+                            </div>
+                        </div>
+                        <div className="budget-bar-bg">
+                            <div 
+                                className={`budget-bar-fill ${isOverBudget ? 'over-budget' : ''}`} 
+                                style={{ width: `${budgetPercentage}%` }}
+                            ></div>
+                        </div>
+                        {isOverBudget ? (
+                            <p className="budget-warning"><AlertCircle size={14}/> You have exceeded your monthly clothing budget. Consider buying second-hand next!</p>
+                        ) : (
+                            <p className="budget-success">You have ₹{(budget - thisMonthSpend).toLocaleString('en-IN')} left to spend this month.</p>
+                        )}
+                        
+                        <div className="edit-budget-row">
+                            <input 
+                                type="number" 
+                                placeholder="Update limits..." 
+                                value={budgetInput} 
+                                onChange={(e)=>setBudgetInput(e.target.value)} 
+                                className="budget-input"
+                            />
+                            <button onClick={handleSaveBudget} disabled={isUpdatingBudget || !budgetInput} className="budget-btn">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="no-budget">
+                        <p>Track your sustainable consumption by setting a monthly clothing allowance.</p>
+                        <div className="edit-budget-row">
+                            <input 
+                                type="number" 
+                                placeholder="₹ Enter Monthly Budget" 
+                                value={budgetInput} 
+                                onChange={(e)=>setBudgetInput(e.target.value)} 
+                                className="budget-input"
+                            />
+                            <button onClick={handleSaveBudget} disabled={isUpdatingBudget || !budgetInput} className="budget-btn">
+                                {isUpdatingBudget ? 'Saving...' : 'Set Budget'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Donation Nudge */}
+            {donationCandidates.length > 0 && (
+                <div className="analytics-card glass-card donation-section">
+                    <div className="ac-header" style={{ marginBottom: '1rem' }}>
+                        <HeartHandshake size={22} className="ac-icon highlight" />
+                        <h3>Donate or Recycle Options</h3>
+                    </div>
+                    <p className="donation-subtitle">You haven't worn these items in over a year. Give them a second life!</p>
+                    <div className="donation-grid">
+                        {donationCandidates.map(item => (
+                            <div key={item._id} className="donation-item">
+                                <img src={item.imageUrl} alt={item.name} className="donation-img" />
+                                <span className="donation-item-name">{item.name || item.category}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="donation-links">
+                        <a href="https://www.clothesboxfoundation.org/" target="_blank" rel="noopener noreferrer" className="donate-link text-gradient">Donate via Clothes Box Foundation</a>
+                        <a href="https://give.do/" target="_blank" rel="noopener noreferrer" className="donate-link text-gradient">Donate via GiveIndia</a>
+                    </div>
+                </div>
+            )}
 
             <div className="analytics-grid">
                 {/* 1. Category Donut Chart */}

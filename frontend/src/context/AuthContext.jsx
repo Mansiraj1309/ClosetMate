@@ -56,9 +56,24 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const updateBudget = async (budget) => {
+        const res = await fetch('http://localhost:5001/api/auth/budget', {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ budget })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        setUser(prev => ({ ...prev, budget: data.budget }));
+        return data.budget;
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
-            {children}
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateBudget }}>
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Upload, X, Sparkles, Loader, Image, CheckCircle } from 'lucide-react';
 import './AddItemModal.css';
 
-// ── Background removal — local npm package ────────────────────────
 // @imgly/background-removal is now installed locally (no CDN needed)
 import { removeBackground } from '@imgly/background-removal';
+import heic2any from 'heic2any';
 
 // ── Dropdown options ──────────────────────────────────────────
 
@@ -49,6 +49,7 @@ const INITIAL_FORM = {
     tags: '',
     styleNotes: '',
     purchasePrice: '',
+    purchaseDate: '',
 };
 
 const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => {
@@ -62,6 +63,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
     const [bgRemoved, setBgRemoved] = useState(false);
     const [bgError, setBgError] = useState('');
     const [autoTagError, setAutoTagError] = useState('');
+    const [isConverting, setIsConverting] = useState(false);
 
     const isEditMode = Boolean(editItem);
 
@@ -83,6 +85,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 tags: (editItem.tags || []).join(', '),
                 styleNotes: editItem.styleNotes || '',
                 purchasePrice: editItem.purchasePrice || '',
+                purchaseDate: editItem.purchaseDate ? new Date(editItem.purchaseDate).toISOString().split('T')[0] : '',
             });
             setFile(null);
             setProcessedFile(null);
@@ -124,15 +127,38 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
         });
     };
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         if (e.target.files[0]) {
-            const picked = e.target.files[0];
+            let picked = e.target.files[0];
+            setBgError('');
+            setAutoTagError('');
+
+            // Automatically convert HEIC/HEIF files to JPEG for native browser compatibility
+            const filename = picked.name.toLowerCase();
+            if (filename.endsWith('.heic') || filename.endsWith('.heif') || picked.type === 'image/heic') {
+                setIsConverting(true);
+                try {
+                    const conversionResult = await heic2any({
+                        blob: picked,
+                        toType: 'image/jpeg',
+                        quality: 0.85
+                    });
+                    
+                    const finalBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+                    picked = new File([finalBlob], picked.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+                } catch (err) {
+                    console.error('HEIC conversion failed:', err);
+                    setBgError('Failed to convert heavy High-Efficiency image format. Please manually convert it or upload a JPG/PNG.');
+                    setIsConverting(false);
+                    return; // Abort upload
+                }
+                setIsConverting(false);
+            }
+
             setFile(picked);
             setProcessedFile(null);
             setPreviewUrl(URL.createObjectURL(picked));
             setBgRemoved(false);
-            setBgError('');
-            setAutoTagError('');
         }
     };
 
@@ -269,6 +295,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
                         styleNotes: formData.styleNotes,
                         purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : null,
+                        purchaseDate: formData.purchaseDate || undefined,
                     }),
                 });
 
@@ -295,6 +322,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 payload.append('tags', formData.tags);
                 payload.append('styleNotes', formData.styleNotes);
                 if (formData.purchasePrice) payload.append('purchasePrice', formData.purchasePrice);
+                if (formData.purchaseDate) payload.append('purchaseDate', formData.purchaseDate);
 
                 res = await fetch('http://localhost:5001/api/wardrobe', {
                     method: 'POST',
@@ -332,7 +360,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                         <div className="form-group file-upload">
                             {/* Upload / Preview area */}
                             <label htmlFor="file-upload" className={`upload-btn ${previewUrl ? 'upload-btn-compact' : ''}`}>
-                                {previewUrl ? (
+                                {isConverting ? (
+                                    <div className="upload-preview-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px' }}>
+                                        <Loader className="spin-icon" size={30} style={{ margin: 'auto', color: 'var(--accent-primary)' }}/>
+                                        <span style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>Processing HEIC format...</span>
+                                    </div>
+                                ) : previewUrl ? (
                                     <div className="upload-preview-wrap">
                                         <img src={previewUrl} alt="preview" className="upload-preview-img" />
                                         {bgRemoved && (
@@ -345,7 +378,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                                     <><Upload size={20} /> Upload or Capture Photo</>
                                 )}
                             </label>
-                            <input id="file-upload" type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
+                            <input id="file-upload" type="file" accept="image/*,.heic,.heif" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} disabled={isConverting} />
 
                             {/* Background removal button */}
                             {file && !bgRemoved && (
@@ -491,16 +524,27 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                         <input type="text" name="styleNotes" placeholder="e.g. Goes great with white sneakers" value={formData.styleNotes} onChange={handleChange} />
                     </div>
 
-                    <div className="form-group">
-                        <label>Purchase Price (₹) <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional, for cost-per-wear analytics</span></label>
-                        <input
-                            type="number"
-                            name="purchasePrice"
-                            placeholder="e.g. 1299"
-                            value={formData.purchasePrice}
-                            onChange={handleChange}
-                            min="0"
-                        />
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Purchase Price (₹) <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional</span></label>
+                            <input
+                                type="number"
+                                name="purchasePrice"
+                                placeholder="e.g. 1299"
+                                value={formData.purchasePrice}
+                                onChange={handleChange}
+                                min="0"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Purchase Date <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional</span></label>
+                            <input
+                                type="date"
+                                name="purchaseDate"
+                                value={formData.purchaseDate}
+                                onChange={handleChange}
+                            />
+                        </div>
                     </div>
 
                     <button type="submit" className="cta-button submit-btn" disabled={isSubmitting}>

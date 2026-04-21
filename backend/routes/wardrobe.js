@@ -15,7 +15,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     try {
         const {
             name, category, type, color, season, formality,
-            occasions, style, gender, tags, styleNotes, purchasePrice
+            occasions, style, gender, tags, styleNotes, purchasePrice, purchaseDate
         } = req.body;
 
         if (!req.file) {
@@ -48,6 +48,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
             tags: parsedTags,
             styleNotes: styleNotes || '',
             purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
+            purchaseDate: purchaseDate ? new Date(purchaseDate) : Date.now(),
         });
 
         const savedItem = await newItem.save();
@@ -99,7 +100,7 @@ router.put('/:id', auth, async (req, res) => {
     try {
         const {
             name, category, type, color, season, formality,
-            occasions, style, gender, tags, styleNotes, purchasePrice
+            occasions, style, gender, tags, styleNotes, purchasePrice, purchaseDate
         } = req.body;
 
         // Parse JSON arrays sent as strings
@@ -125,6 +126,7 @@ router.put('/:id', auth, async (req, res) => {
         if (parsedOccasions !== undefined) updates.occasions = parsedOccasions;
         if (parsedTags !== undefined) updates.tags = parsedTags;
         if (purchasePrice !== undefined) updates.purchasePrice = purchasePrice ? parseFloat(purchasePrice) : null;
+        if (purchaseDate !== undefined) updates.purchaseDate = purchaseDate ? new Date(purchaseDate) : Date.now();
 
         const item = await Item.findOneAndUpdate(
             { _id: req.params.id, userId: req.userId },
