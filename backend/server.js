@@ -30,6 +30,8 @@ console.log('Loading /api/stats');
 app.use('/api/stats', require('./routes/stats'));
 console.log('Loading /api/logs');
 app.use('/api/logs', require('./routes/logs'));
+console.log('Loading /api/community');
+app.use('/api/community', require('./routes/community'));
 console.log('All routes loaded.');
 
 // Database Connection

@@ -6,6 +6,7 @@ import Stylist from './pages/Stylist';
 import AuthPage from './pages/AuthPage';
 import OutfitCalendar from './pages/OutfitCalendar';
 import Analytics from './pages/Analytics';
+import Community from './pages/Community';
 import ProfileMenu from './components/ProfileMenu';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WeatherProvider, useWeather } from './context/WeatherContext';
@@ -308,6 +309,10 @@ const Dashboard = () => {
                         </li>
                         <li>
                             <div className="event-dot"></div>
+                            <Link to="/community" style={{ color: 'inherit', textDecoration: 'none' }}>Community Inspiration</Link>
+                        </li>
+                        <li>
+                            <div className="event-dot"></div>
                             <Link to="/stylist?occasion=what%20should%20I%20wear%20today" style={{ color: 'inherit', textDecoration: 'none' }}>What should I wear today?</Link>
                         </li>
                     </ul>
@@ -332,6 +337,7 @@ const Navigation = () => {
                 <Link to="/wardrobe" className={`nav-btn ${location.pathname === '/wardrobe' ? 'active' : ''}`}>Wardrobe</Link>
                 <Link to="/stylist" className={`nav-btn ${location.pathname === '/stylist' ? 'active' : ''}`}>AI Stylist</Link>
                 <Link to="/calendar" className={`nav-btn ${location.pathname === '/calendar' ? 'active' : ''}`}>Calendar</Link>
+                <Link to="/community" className={`nav-btn ${location.pathname === '/community' ? 'active' : ''}`}>Community</Link>
                 <Link to="/analytics" className={`nav-btn ${location.pathname === '/analytics' ? 'active' : ''}`}>Analytics</Link>
             </div>
             <ProfileMenu />
@@ -349,6 +355,7 @@ const AppShell = () => {
                 <Route path="/wardrobe" element={<Wardrobe />} />
                 <Route path="/stylist" element={<Stylist />} />
                 <Route path="/calendar" element={<OutfitCalendar />} />
+                <Route path="/community" element={<Community />} />
                 <Route path="/analytics" element={<Analytics />} />
             </Routes>
         </div>

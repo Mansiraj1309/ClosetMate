@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, PlaneTakeoff } from 'lucide-react';
+import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, PlaneTakeoff, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
 import './Stylist.css';
@@ -44,6 +44,12 @@ const Stylist = () => {
     const [logLoading, setLogLoading] = useState(false);
     const [logSuccess, setLogSuccess] = useState(false);
     const [loggedOccasion, setLoggedOccasion] = useState('');
+
+    // Share State
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareSuccess, setShareSuccess] = useState(false);
+    const [shareDescription, setShareDescription] = useState('');
+    const [showShareModal, setShowShareModal] = useState(false);
 
     // Packing List mode
     const [tripDestination, setTripDestination] = useState('');
@@ -202,6 +208,38 @@ const Stylist = () => {
             console.error('Error logging outfit:', err);
         } finally {
             setLogLoading(false);
+        }
+    };
+
+    const handleShareOutfit = async (e) => {
+        e.preventDefault();
+        if (!token || !recommendation?.outfit) return;
+
+        setShareLoading(true);
+        try {
+            const itemIds = recommendation.outfit.map(item => item._id);
+
+            const res = await fetch('http://localhost:5001/api/community', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    items: itemIds,
+                    occasion: occasion || genOccasion || 'Stylist Recommendation',
+                    description: shareDescription
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to share to community');
+
+            setShareSuccess(true);
+            setShowShareModal(false);
+        } catch (err) {
+            console.error('Error sharing outfit:', err);
+        } finally {
+            setShareLoading(false);
         }
     };
 
@@ -376,8 +414,60 @@ const Stylist = () => {
                                         {logLoading ? 'Logging…' : '📅 Log This Outfit'}
                                     </button>
                                 )}
+                                
+                                {shareSuccess ? (
+                                    <div className="log-success-toast share-success-toast">
+                                        <CheckCircle size={16} /> Shared to community!
+                                    </div>
+                                ) : (
+                                    <button
+                                        className="log-outfit-btn share-outfit-btn"
+                                        onClick={() => setShowShareModal(true)}
+                                    >
+                                        <Share2 size={15} /> 🌟 Share to Community
+                                    </button>
+                                )}
                             </div>
                         </div>
+
+                        {/* Share Modal overlay inside recommendation section */}
+                        {showShareModal && (
+                            <div className="share-modal-overlay">
+                                <div className="glass-card share-modal-card">
+                                    <h3><Share2 size={18} className="highlight"/> Share your Look</h3>
+                                    <p>Post this outfit to the community feed to inspire others!</p>
+                                    <form onSubmit={handleShareOutfit}>
+                                        <input 
+                                            className="occasion-input share-input" 
+                                            type="text" 
+                                            placeholder="Add a comment or caption (optional)..."
+                                            value={shareDescription}
+                                            onChange={(e) => setShareDescription(e.target.value)}
+                                            autoFocus
+                                            maxLength={150}
+                                        />
+                                        <div className="share-modal-actions">
+                                            <button 
+                                                type="button" 
+                                                className="log-outfit-btn" 
+                                                onClick={() => setShowShareModal(false)}
+                                                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button 
+                                                type="submit" 
+                                                className="cta-button"
+                                                disabled={shareLoading}
+                                                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+                                            >
+                                                {shareLoading ? <Loader size={16} className="spin" /> : 'Post to Feed'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Outfit Breakdown (structured slots) */}
                         {hasSlotMap && (
