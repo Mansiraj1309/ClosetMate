@@ -103,14 +103,28 @@ Rules:
             contents: prompt,
         });
 
-        let aiText = response.text;
-        // Strip markdown code fences if present
-        aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        let aiText;
+        try {
+            aiText = response.text;
+            if (!aiText) throw new Error("Empty AI response");
+            
+            // Strip markdown code fences if present
+            aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        } catch (respErr) {
+            console.error('AI Response Extract Error:', respErr);
+            throw new Error(`AI generated invalid response format: ${respErr.message}`);
+        }
 
-        const parsedResponse = JSON.parse(aiText);
+        let parsedResponse;
+        try {
+            parsedResponse = JSON.parse(aiText);
+        } catch (parseErr) {
+            console.error('AI JSON Parse Error:', parseErr, 'Raw Text:', aiText);
+            throw new Error("AI failed to generate a valid wardrobe selection. Try a different prompt.");
+        }
 
         const selectedOutfit = await Item.find({
-            '_id': { $in: parsedResponse.selectedItemIds },
+            '_id': { $in: parsedResponse.selectedItemIds || [] },
             userId: req.userId
         });
 
@@ -129,7 +143,7 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: 'AI failed to respond. Please try again in a few seconds.' });
+        res.status(500).json({ message: err.message || 'AI Stylist is currently unavailable.' });
     }
 });
 
