@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from '../api';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, PlaneTakeoff, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -78,7 +79,7 @@ const Stylist = () => {
         setLogSuccess(false);
         setLoggedOccasion(body.occasion || '');
         try {
-            const res = await fetch('http://localhost:5001/api/stylist/recommend', {
+            const res = await fetch(`${API_BASE}/api/stylist/recommend`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ const Stylist = () => {
         setError('');
         setPackingRecommendation(null);
         try {
-            const res = await fetch('http://localhost:5001/api/stylist/packing-list', {
+            const res = await fetch(`${API_BASE}/api/stylist/packing-list`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ const Stylist = () => {
         setLogLoading(true);
         try {
             const itemIds = recommendation.outfit.map(i => i._id);
-            const res = await fetch('http://localhost:5001/api/logs', {
+            const res = await fetch(`${API_BASE}/api/logs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -219,7 +220,7 @@ const Stylist = () => {
         try {
             const itemIds = recommendation.outfit.map(item => item._id);
 
-            const res = await fetch('http://localhost:5001/api/community', {
+            const res = await fetch(`${API_BASE}/api/community`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

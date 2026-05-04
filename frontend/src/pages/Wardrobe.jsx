@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import API_BASE from '../api';
 import { Shirt, Plus, X, Search, Filter, CheckCircle, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AddItemModal from '../components/AddItemModal';
@@ -34,7 +35,7 @@ const Wardrobe = () => {
     const fetchItems = useCallback(async () => {
         try {
             const qs = buildQuery();
-            const url = `http://localhost:5001/api/wardrobe${qs ? `?${qs}` : ''}`;
+            const url = `${API_BASE}/api/wardrobe${qs ? `?${qs}` : ''}`;
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -72,7 +73,7 @@ const Wardrobe = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            const res = await fetch(`http://localhost:5001/api/wardrobe/${id}`, {
+            const res = await fetch(`${API_BASE}/api/wardrobe/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -84,7 +85,7 @@ const Wardrobe = () => {
 
     const handleWear = async (id) => {
         try {
-            const res = await fetch(`http://localhost:5001/api/wardrobe/${id}/wear`, {
+            const res = await fetch(`${API_BASE}/api/wardrobe/${id}/wear`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

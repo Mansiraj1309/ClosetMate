@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from './api';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle, CloudSun, Loader, BarChart2, CalendarDays, Menu, X as XIcon } from 'lucide-react';
 import Wardrobe from './pages/Wardrobe';
@@ -104,7 +105,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (token) {
-            fetch('http://localhost:5001/api/stats', {
+            fetch(`${API_BASE}/api/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.ok ? res.json() : Promise.reject())

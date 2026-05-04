@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from '../api';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -30,7 +31,7 @@ const Analytics = () => {
 
     useEffect(() => {
         if (!token) return;
-        fetch('http://localhost:5001/api/wardrobe', {
+        fetch(`${API_BASE}/api/wardrobe`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.ok ? res.json() : Promise.reject())

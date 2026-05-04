@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import API_BASE from '../api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +26,7 @@ const OutfitCalendar = () => {
         if (!token) return;
         const month = getMonthStr(date);
         try {
-            const res = await fetch(`http://localhost:5001/api/logs?month=${month}`, {
+            const res = await fetch(`${API_BASE}/api/logs?month=${month}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -70,7 +71,7 @@ const OutfitCalendar = () => {
         if (!selectedLog) return;
         setDeleteLoading(true);
         try {
-            const res = await fetch(`http://localhost:5001/api/logs/${selectedLog._id}`, {
+            const res = await fetch(`${API_BASE}/api/logs/${selectedLog._id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Heart, MessageSquare, Compass, Share2 } from 'lucide-react';
 import './Community.css';
@@ -16,7 +17,7 @@ const Community = () => {
     const fetchPosts = async () => {
         if (!token) return;
         try {
-            const res = await fetch('http://localhost:5001/api/community', {
+            const res = await fetch(`${API_BASE}/api/community`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Failed to fetch posts');
@@ -47,7 +48,7 @@ const Community = () => {
                 return post;
             }));
 
-            const res = await fetch(`http://localhost:5001/api/community/${postId}/like`, {
+            const res = await fetch(`${API_BASE}/api/community/${postId}/like`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

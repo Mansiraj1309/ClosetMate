@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import API_BASE from '../api';
 import { Upload, X, Sparkles, Loader, Image, CheckCircle } from 'lucide-react';
 import './AddItemModal.css';
 
@@ -223,7 +224,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 const [meta, imageBase64] = base64Full.split(',');
                 const mimeType = meta.match(/:(.*?);/)[1];
 
-                const res = await fetch('http://localhost:5001/api/wardrobe/analyze-image', {
+                const res = await fetch(`${API_BASE}/api/wardrobe/analyze-image`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -276,7 +277,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
             let res;
             if (isEditMode) {
                 // PUT JSON for editing (no image change)
-                res = await fetch(`http://localhost:5001/api/wardrobe/${editItem._id}`, {
+                res = await fetch(`${API_BASE}/api/wardrobe/${editItem._id}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -324,7 +325,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 if (formData.purchasePrice) payload.append('purchasePrice', formData.purchasePrice);
                 if (formData.purchaseDate) payload.append('purchaseDate', formData.purchaseDate);
 
-                res = await fetch('http://localhost:5001/api/wardrobe', {
+                res = await fetch(`${API_BASE}/api/wardrobe`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: payload,
