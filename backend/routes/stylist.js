@@ -129,7 +129,7 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: 'Failed to generate recommendation. Check AI API Key or try again later.' });
+        res.status(500).json({ message: `AI Error: ${err.message}` });
     }
 });
 
