@@ -99,5 +99,4 @@ We have optimized the application to be deployed seamlessly to modern cloud prov
    - `VITE_API_URL`: Paste the Render URL you copied in the previous step!
 6. Click **Deploy**.
 
-## 📄 License
-MIT License. Created by Abhinav Anand.
+
