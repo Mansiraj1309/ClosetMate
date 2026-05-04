@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
-const { GoogleGenAI } = require('@google/genai');
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Using fetch for direct API calls to avoid SDK issues
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
 // @route   POST /api/stylist/recommend
 // @desc    Get an outfit recommendation + shopping suggestions for the logged-in user
@@ -97,34 +96,25 @@ Rules:
 - Always suggest real Indian e-commerce stores (Myntra, Ajio, Amazon India, Flipkart, Tata CLiQ) with their actual website URLs.
 - Prices should be realistic estimates in Indian Rupees (₹).
 `;
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+        const aiRes = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
         });
 
-        let aiText;
-        try {
-            aiText = response.text;
-            if (!aiText) throw new Error("Empty AI response");
-            
-            // Strip markdown code fences if present
-            aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-        } catch (respErr) {
-            console.error('AI Response Extract Error:', respErr);
-            throw new Error(`AI generated invalid response format: ${respErr.message}`);
-        }
+        const aiData = await aiRes.json();
+        if (!aiRes.ok) throw new Error(aiData.error?.message || 'Gemini API Error');
 
-        let parsedResponse;
-        try {
-            parsedResponse = JSON.parse(aiText);
-        } catch (parseErr) {
-            console.error('AI JSON Parse Error:', parseErr, 'Raw Text:', aiText);
-            throw new Error("AI failed to generate a valid wardrobe selection. Try a different prompt.");
-        }
+        let aiText = aiData.candidates[0].content.parts[0].text;
+        // Strip markdown code fences if present
+        aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+        const parsedResponse = JSON.parse(aiText);
 
         const selectedOutfit = await Item.find({
-            '_id': { $in: parsedResponse.selectedItemIds || [] },
+            '_id': { $in: parsedResponse.selectedItemIds },
             userId: req.userId
         });
 
@@ -143,7 +133,7 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: err.message || 'AI Stylist is currently unavailable.' });
+        res.status(500).json({ message: 'AI failed to respond. Please try again in a few seconds.' });
     }
 });
 
@@ -235,12 +225,18 @@ Rules:
 - Prices should be in Indian Rupees (₹). Real stores only.
 `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+        const aiRes = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
         });
 
-        let aiText = response.text;
+        const aiData = await aiRes.json();
+        if (!aiRes.ok) throw new Error(aiData.error?.message || 'Gemini API Error');
+
+        let aiText = aiData.candidates[0].content.parts[0].text;
         aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
         const parsedResponse = JSON.parse(aiText);
