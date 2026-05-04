@@ -171,7 +171,18 @@ const Wardrobe = () => {
 
             {/* Grid */}
             {loading ? (
-                <div className="loading-state">Loading your wardrobe...</div>
+                <div className="wardrobe-grid">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="item-card glass-card skeleton-card">
+                            <div className="skeleton skeleton-img"></div>
+                            <div className="skeleton-details">
+                                <div className="skeleton skeleton-title"></div>
+                                <div className="skeleton skeleton-tag"></div>
+                                <div className="skeleton skeleton-tag short"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             ) : items.length === 0 ? (
                 <div className="empty-state glass-card">
                     <Shirt size={48} className="empty-icon" />

@@ -41,9 +41,16 @@ const Analytics = () => {
     if (loading) {
         return (
             <div className="analytics-page">
-                <div className="analytics-loading">
-                    <BarChart2 size={48} className="loading-icon spin" />
-                    <p>Crunching your wardrobe data…</p>
+                <header className="analytics-header">
+                    <BarChart2 size={40} className="header-icon" style={{color:'var(--accent)' }} />
+                    <h1 className="gradient-text">Wardrobe Analytics</h1>
+                    <p className="subtitle">Crunching your wardrobe data…</p>
+                </header>
+                <div className="analytics-skeleton-grid">
+                    {[...Array(4)].map((_, i) => <div key={i} className="skeleton skeleton-summary-card"></div>)}
+                </div>
+                <div className="analytics-skeleton-charts">
+                    {[...Array(4)].map((_, i) => <div key={i} className="skeleton skeleton-chart-card"></div>)}
                 </div>
             </div>
         );

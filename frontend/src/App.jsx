@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
-import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle, CloudSun, Loader, BarChart2, CalendarDays } from 'lucide-react';
+import { Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, TrendingUp, TrendingDown, AlertCircle, CloudSun, Loader, BarChart2, CalendarDays, Menu, X as XIcon } from 'lucide-react';
 import Wardrobe from './pages/Wardrobe';
 import Stylist from './pages/Stylist';
 import AuthPage from './pages/AuthPage';
@@ -325,22 +325,60 @@ const Dashboard = () => {
 // Navigation Component
 const Navigation = () => {
     const location = useLocation();
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    // Close menu when route changes
+    useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+
+    const navLinks = [
+        { to: '/', label: 'Dashboard' },
+        { to: '/wardrobe', label: 'Wardrobe' },
+        { to: '/stylist', label: 'AI Stylist' },
+        { to: '/calendar', label: 'Calendar' },
+        { to: '/community', label: 'Community' },
+        { to: '/analytics', label: 'Analytics' },
+    ];
 
     return (
-        <nav className="glass-nav">
-            <Link to="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <Sparkles className="logo-icon" size={24} />
-                <span>ClosetMate</span>
-            </Link>
-            <div className="nav-links">
-                <Link to="/" className={`nav-btn ${location.pathname === '/' ? 'active' : ''}`}>Dashboard</Link>
-                <Link to="/wardrobe" className={`nav-btn ${location.pathname === '/wardrobe' ? 'active' : ''}`}>Wardrobe</Link>
-                <Link to="/stylist" className={`nav-btn ${location.pathname === '/stylist' ? 'active' : ''}`}>AI Stylist</Link>
-                <Link to="/calendar" className={`nav-btn ${location.pathname === '/calendar' ? 'active' : ''}`}>Calendar</Link>
-                <Link to="/community" className={`nav-btn ${location.pathname === '/community' ? 'active' : ''}`}>Community</Link>
-                <Link to="/analytics" className={`nav-btn ${location.pathname === '/analytics' ? 'active' : ''}`}>Analytics</Link>
+        <nav className={`glass-nav ${menuOpen ? 'nav-open' : ''}`}>
+            <div className="nav-top-row">
+                <Link to="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Sparkles className="logo-icon" size={24} />
+                    <span>ClosetMate</span>
+                </Link>
+                <div className="nav-links nav-links-desktop">
+                    {navLinks.map(link => (
+                        <Link
+                            key={link.to}
+                            to={link.to}
+                            className={`nav-btn ${location.pathname === link.to ? 'active' : ''}`}
+                        >{link.label}</Link>
+                    ))}
+                </div>
+                <div className="nav-right">
+                    <ProfileMenu />
+                    <button
+                        className="hamburger-btn"
+                        onClick={() => setMenuOpen(o => !o)}
+                        aria-label="Toggle menu"
+                    >
+                        {menuOpen ? <XIcon size={22} /> : <Menu size={22} />}
+                    </button>
+                </div>
             </div>
-            <ProfileMenu />
+
+            {/* Mobile dropdown */}
+            {menuOpen && (
+                <div className="nav-mobile-menu">
+                    {navLinks.map(link => (
+                        <Link
+                            key={link.to}
+                            to={link.to}
+                            className={`nav-mobile-link ${location.pathname === link.to ? 'active' : ''}`}
+                        >{link.label}</Link>
+                    ))}
+                </div>
+            )}
         </nav>
     );
 };

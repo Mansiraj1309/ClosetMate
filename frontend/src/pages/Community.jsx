@@ -69,9 +69,27 @@ const Community = () => {
     if (loading) {
         return (
             <div className="community-page">
-                <div className="community-empty">
-                    <Compass size={48} className="spin" />
-                    <p>Loading community inspiration...</p>
+                <header className="community-header">
+                    <Compass size={40} className="header-icon" />
+                    <h1 className="gradient-text">Community Feed</h1>
+                    <p className="subtitle">Get inspired by outfits generated and shared by other ClosetMate users.</p>
+                </header>
+                <div className="feed-container">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="post-card glass-card skeleton-post">
+                            <div className="skeleton-post-header">
+                                <div className="skeleton skeleton-avatar"></div>
+                                <div className="skeleton-post-meta">
+                                    <div className="skeleton skeleton-line w60"></div>
+                                    <div className="skeleton skeleton-line w40" style={{marginTop:'6px'}}></div>
+                                </div>
+                            </div>
+                            <div className="skeleton skeleton-line w80" style={{marginBottom:'1rem'}}></div>
+                            <div className="skeleton-post-grid">
+                                {[1,2,3].map(j => <div key={j} className="skeleton skeleton-post-img"></div>)}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );
