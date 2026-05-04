@@ -1,5 +1,7 @@
 # 🪄 ClosetMate
 
+**[🔴 Live Demo: closet-mate.vercel.app](https://closet-mate.vercel.app/)**
+
 ClosetMate is an AI-powered smart wardrobe manager. Instead of just digitizing your clothes, ClosetMate uses Google Gemini and advanced analytics to act as your personal stylist — suggesting what to wear based on the weather, logging your outfits, and giving you deep insights into your style habits.
 
 Built as an 8th Semester Major Project, focusing on real-world utility, intelligent metadata extraction, and sustainable fashion.
