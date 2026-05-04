@@ -115,7 +115,7 @@
     gap: 0.5rem;
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid var(--card-border);
     color: var(--text-secondary);
     font-size: 0.8rem;
 }
@@ -170,7 +170,7 @@
 }
 
 .icon-btn {
-    background: rgba(255,255,255,0.07);
+    background: var(--card-bg);
     border: none;
     color: var(--text-secondary);
     border-radius: 8px;
@@ -199,10 +199,10 @@
 }
 
 .log-item-card {
-    background: rgba(255,255,255,0.05);
+    background: var(--card-bg);
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--card-border);
     transition: transform 0.15s;
 }
 
@@ -238,7 +238,7 @@
 .log-notes {
     font-size: 0.82rem;
     color: var(--text-secondary);
-    background: rgba(255,255,255,0.04);
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 0.6rem 0.75rem;
     margin-bottom: 1rem;
@@ -324,14 +324,14 @@
     align-items: center;
     gap: 1rem;
     padding: 0.6rem 0.75rem;
-    background: rgba(255,255,255,0.04);
+    background: var(--card-bg);
     border-radius: 10px;
     cursor: pointer;
     transition: background 0.15s;
 }
 
 .month-log-row:hover {
-    background: rgba(255,255,255,0.08);
+    background: var(--card-bg);
 }
 
 .month-log-date {
@@ -361,7 +361,7 @@
     height: 30px;
     border-radius: 6px;
     object-fit: cover;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid var(--card-border);
 }
 
 .thumb-more {

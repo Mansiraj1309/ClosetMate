@@ -87,7 +87,7 @@ body {
 }
 
 .hamburger-btn:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* Desktop nav links sit inline */
@@ -108,8 +108,15 @@ body {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .nav-mobile-link {
@@ -125,7 +132,7 @@ body {
 .nav-mobile-link:hover,
 .nav-mobile-link.active {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .logo {
@@ -378,8 +385,13 @@ body {
   }
 
   /* Show hamburger, hide desktop links */
-  .hamburger-btn { display: flex; }
-  .nav-links-desktop { display: none !important; }
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .nav-links-desktop {
+    display: none !important;
+  }
 
   .gradient-text {
     font-size: 2.2rem;
@@ -389,7 +401,9 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .ai-card { grid-column: span 1; }
+  .ai-card {
+    grid-column: span 1;
+  }
 }
 
 /* =========================================
@@ -720,17 +734,28 @@ body {
 
 /* Spin animation for weather loader */
 @keyframes spin-anim {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin-anim {
   animation: spin-anim 1s linear infinite;
 }
+
 /* ── Global .spin utility (used on loading icons) ── */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
@@ -741,7 +766,7 @@ body {
 .glass-card:hover {
   transform: translateY(-4px);
   border-color: rgba(129, 140, 248, 0.2);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(129,140,248,0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(129, 140, 248, 0.08);
 }
 
 /* ── Focus ring for accessibility ── */
@@ -749,6 +774,6 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid rgba(129,140,248,0.7);
+  outline: 2px solid rgba(129, 140, 248, 0.7);
   outline-offset: 2px;
 }

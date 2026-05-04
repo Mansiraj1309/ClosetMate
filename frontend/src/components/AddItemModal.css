@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--card-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -81,7 +81,7 @@
 .form-group input, 
 .form-group select {
   padding: 0.8rem 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--border-radius-sm);
   color: var(--text-primary);
@@ -284,7 +284,7 @@
   font-size: 0.8rem;
   border-radius: 100px;
   border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-bg);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;

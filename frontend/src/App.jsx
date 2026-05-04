@@ -132,7 +132,7 @@ const Dashboard = () => {
             </header>
 
             {/* Weather Card */}
-                <WeatherCard />
+            <WeatherCard />
 
             <section className="dashboard-grid">
                 {/* Wardrobe Stats Card */}
