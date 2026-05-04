@@ -99,7 +99,7 @@ Rules:
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
         });
 
@@ -129,7 +129,7 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: `AI Error: ${err.message}` });
+        res.status(500).json({ message: 'AI failed to respond. Please try again in a few seconds.' });
     }
 });
 
@@ -222,7 +222,7 @@ Rules:
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
         });
 
