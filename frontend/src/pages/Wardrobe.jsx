@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API_BASE from '../api';
-import { Shirt, Plus, X, Search, Filter, CheckCircle, Pencil } from 'lucide-react';
+import { Shirt, Plus, X, Search, Filter, CheckCircle, Pencil, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AddItemModal from '../components/AddItemModal';
 import './Wardrobe.css';
@@ -185,10 +185,18 @@ const Wardrobe = () => {
                     ))}
                 </div>
             ) : items.length === 0 ? (
-                <div className="empty-state glass-card">
-                    <Shirt size={48} className="empty-icon" />
-                    <h3>{hasActiveFilters ? 'No items match your filters.' : 'Your closet is empty!'}</h3>
-                    <p>{hasActiveFilters ? 'Try adjusting or clearing filters.' : 'Click "Add New Item" to start building your digital wardrobe.'}</p>
+                <div className="empty-state-premium glass-card fadeIn">
+                    <div className="illustration-wrap">
+                        <Shirt size={80} strokeWidth={1} className="main-icon" />
+                        <Sparkles size={30} className="sparkle-icon" />
+                    </div>
+                    <h3>{hasActiveFilters ? 'No items match your filters.' : 'Your fashion journey starts here ✨'}</h3>
+                    <p>{hasActiveFilters ? 'Try adjusting or clearing filters to find what you need.' : 'ClosetMate is more fun when you have your clothes logged. Let\'s add your first item!'}</p>
+                    {!hasActiveFilters && (
+                        <button className="cta-button" onClick={() => setIsModalOpen(true)}>
+                            <Plus size={20} /> Add Your First Item
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="wardrobe-grid">
@@ -203,7 +211,7 @@ const Wardrobe = () => {
                                 </button>
                             </div>
                             <div className="item-image-wrapper">
-                                <img src={item.imageUrl} alt={item.name || item.category} className="item-image" />
+                                <img src={item.imageUrl} alt={item.name || item.category} className="item-image" loading="lazy" />
                                 <span className={`season-badge ${item.season?.toLowerCase().replace(/\s/g, '-')}`}>
                                     {item.season}
                                 </span>

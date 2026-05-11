@@ -1,0 +1,49 @@
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: var(--nav-bg);
+    backdrop-filter: var(--blur-xl);
+    -webkit-backdrop-filter: var(--blur-xl);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1000;
+    transition: background var(--transition-speed);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 500;
+    flex: 1;
+    transition: all 0.2s ease;
+}
+
+.nav-item.active {
+    color: var(--accent-primary);
+}
+
+.nav-item span {
+    opacity: 0.8;
+}
+
+.nav-item.active span {
+    opacity: 1;
+}
+
+/* Add extra padding to the bottom of the main content when bottom nav is present */
+@media (max-width: 768px) {
+    .app-container {
+        padding-bottom: 90px !important;
+    }
+}

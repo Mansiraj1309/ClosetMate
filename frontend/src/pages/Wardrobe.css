@@ -142,17 +142,50 @@
     color: var(--text-primary);
 }
 
-/* ── Empty & loading states ──────────────── */
-
-.empty-state {
+/* ── Empty State ── */
+.empty-state-premium {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 5rem 2rem;
     text-align: center;
+    min-height: 500px;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.illustration-wrap {
+    position: relative;
+    color: var(--accent-primary);
+    margin-bottom: 1rem;
+}
+
+.illustration-wrap .main-icon {
+    opacity: 0.15;
+}
+
+.illustration-wrap .sparkle-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(10deg); }
+}
+
+.empty-state-premium h3 {
+    font-size: 1.8rem;
+    color: var(--text-primary);
+}
+
+.empty-state-premium p {
     color: var(--text-secondary);
-    border-style: dashed !important;
+    max-width: 400px;
+    line-height: 1.6;
 }
 
 .empty-icon {
@@ -175,6 +208,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 400px;
 }
 
 /* Card action buttons (edit + delete) */

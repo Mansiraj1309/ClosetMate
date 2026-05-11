@@ -19,6 +19,12 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Diagnosis Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from ${req.ip}`);
+    next();
+});
+
 // Routes
 console.log('Loading /api/auth');
 app.use('/api/auth', require('./routes/auth'));
@@ -45,6 +51,7 @@ app.get('/', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+const HOST = '0.0.0.0';
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
 });

@@ -1,0 +1,190 @@
+.scan-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.scan-modal-content {
+    width: 100%;
+    max-width: 450px;
+    background: var(--bg-color);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.close-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.scan-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.scan-header h2 {
+    font-size: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.camera-viewport {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #000;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border: 2px solid var(--card-border);
+}
+
+.video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scan-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    color: white;
+}
+
+.scan-target-box {
+    width: 60%;
+    height: 60%;
+    border: 2px solid var(--accent-primary);
+    border-radius: 20px;
+    box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.scan-target-box::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-primary);
+    box-shadow: 0 0 15px var(--accent-primary);
+    animation: scanLine 2s infinite ease-in-out;
+}
+
+@keyframes scanLine {
+    0% { top: 0; }
+    50% { top: 100%; }
+    100% { top: 0; }
+}
+
+.scan-action-btn {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 100px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+}
+
+.scan-processing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    color: var(--accent-primary);
+}
+
+.scan-success-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.item-preview {
+    background: rgba(255,255,255,0.03);
+    padding: 1rem;
+    border-radius: 12px;
+    width: 100%;
+    margin: 1.5rem 0;
+    border: 1px solid var(--card-border);
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.item-info strong {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.item-info span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.scan-footer {
+    text-align: center;
+}
+
+.scan-footer p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}

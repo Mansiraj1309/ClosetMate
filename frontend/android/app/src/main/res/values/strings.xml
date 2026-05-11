@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ClosetMate</string>
+    <string name="title_activity_main">ClosetMate</string>
+    <string name="package_name">com.closetmate.app</string>
+    <string name="custom_url_scheme">com.closetmate.app</string>
+</resources>

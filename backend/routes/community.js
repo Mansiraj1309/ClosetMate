@@ -77,4 +77,32 @@ router.patch('/:id/like', auth, async (req, res) => {
     }
 });
 
+// @route   POST /api/community/:id/comment
+// @desc    Add a comment to a post
+router.post('/:id/comment', auth, async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ message: 'Comment text is required' });
+
+        const post = await OutfitPost.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        // Get user name for display
+        const User = require('../models/User');
+        const user = await User.findById(req.userId);
+
+        post.comments.push({
+            userId: req.userId,
+            userName: user.name,
+            text,
+        });
+
+        await post.save();
+        res.json(post.comments);
+    } catch (err) {
+        console.error('Error adding comment:', err);
+        res.status(500).json({ message: 'Server error adding comment' });
+    }
+});
+
 module.exports = router;

@@ -4,23 +4,26 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--card-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 1.5rem;
   overflow-y: auto;
 }
 
 .modal-content {
   width: 90%;
   max-width: 560px;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
   position: relative;
+  background: #1a1d24;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
   animation: slideUp 0.3s ease-out;
 }
 
@@ -333,7 +336,88 @@
   border: 1px solid var(--card-border);
 }
 
+/* ── Progressive Form Styles ────────────────── */
+
+.modal-header-simple {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.step-indicator span {
+  width: 30px;
+  height: 4px;
+  background: var(--card-border);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.step-indicator span.active {
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.step-desc {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-top: -0.5rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-group button {
+  flex: 1;
+}
+
+.fadeIn {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.mobile-optimized {
+  max-width: 480px;
+  padding: 2.5rem 2rem;
+}
+
+.mt-2 { margin-top: 0.5rem; }
+.flex-center { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 1rem;
+}
+
+.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 @media (max-width: 500px) {
+  .mobile-optimized {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 3rem 1.5rem;
+  }
+  
   .form-row {
     flex-direction: column;
     gap: 1.25rem;

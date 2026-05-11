@@ -1,0 +1,99 @@
+.fab-container {
+    position: fixed;
+    bottom: 85px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 15px;
+    z-index: 999;
+}
+
+.fab-main {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(129, 140, 248, 0.4);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-main:hover {
+    transform: scale(1.1);
+}
+
+.fab-container.open .fab-main {
+    transform: rotate(0deg);
+    background: var(--text-primary);
+    color: var(--bg-color);
+}
+
+.fab-options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.fab-container.open .fab-options {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+.fab-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.fab-icon-inner {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    backdrop-filter: var(--blur-xl);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.fab-option:hover .fab-icon-inner {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.fab-label {
+    background: var(--card-bg);
+    backdrop-filter: var(--blur-xl);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 769px) {
+    .fab-container {
+        display: none;
+    }
+}

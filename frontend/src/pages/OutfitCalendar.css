@@ -369,3 +369,94 @@
     color: var(--text-secondary);
     padding: 0 4px;
 }
+
+/* ── Mobile Bottom Drawer ── */
+@media (max-width: 768px) {
+    .calendar-page { padding: 1rem; }
+    
+    .react-calendar {
+        width: 100% !important;
+    }
+
+    .log-panel.bottom-drawer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        background: var(--bg-color);
+        border-top: 1px solid var(--card-border);
+        border-radius: 24px 24px 0 0;
+        padding: 1.5rem;
+        padding-top: 0.5rem;
+        min-height: auto;
+        max-height: 85vh;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .log-panel.panel-open.bottom-drawer {
+        transform: translateY(0);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    }
+
+    .drawer-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1999;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .drawer-handle {
+        width: 40px;
+        height: 4px;
+        background: var(--card-border);
+        border-radius: 100px;
+        margin: 0.5rem auto 1rem;
+    }
+
+    .log-scroll-area {
+        overflow-y: auto;
+        flex: 1;
+        padding-bottom: 2rem;
+    }
+
+    .panel-header h3 { font-size: 1.2rem; }
+}
+
+/* ── Refined Card Layouts ── */
+.panel-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-item-img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+}
+
+.log-item-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.log-item-card:hover .log-item-img-wrap img {
+    transform: scale(1.1);
+}
+
+.log-notes-section {
+    border-top: 1px solid var(--card-border);
+    padding-top: 1rem;
+    margin-top: 1rem;
+}

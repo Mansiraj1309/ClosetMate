@@ -23,6 +23,12 @@ const outfitPostSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
+    comments: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        userName: String,
+        text: String,
+        createdAt: { type: Date, default: Date.now }
+    }],
     createdAt: {
         type: Date,
         default: Date.now,

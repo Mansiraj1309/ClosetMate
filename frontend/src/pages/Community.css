@@ -1,7 +1,42 @@
 .community-page {
     padding: 2rem;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
+}
+
+.community-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.empty-illustration {
+    position: relative;
+    color: var(--accent-primary);
+    opacity: 0.6;
+}
+
+.empty-sparkle {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.6; }
+}
+
+@media (max-width: 768px) {
+    .community-highlights {
+        grid-template-columns: 1fr;
+    }
 }
 
 .community-header {
@@ -14,19 +49,73 @@
     margin-bottom: 0.75rem;
 }
 
+.community-highlights {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.highlight-card {
+    padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 18px;
+    border: 1px solid var(--card-border);
+}
+
+.h-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--accent-primary);
+}
+
+.h-content h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.h-content p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.join-btn, .vote-btn {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.highlight-card.challenge {
+    background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, transparent 100%);
+}
+
+.highlight-card.battle {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, transparent 100%);
+}
+
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
 .community-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    gap: 1rem;
-    color: var(--text-secondary);
-    text-align: center;
-}
-
-.feed-container {
-    display: flex;
     flex-direction: column;
     gap: 2rem;
     margin-bottom: 3rem;
@@ -224,4 +313,95 @@
 @keyframes cardEnter {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Comments Section ── */
+.post-comments-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.comments-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 10px;
+}
+
+.comment-row {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.comment-row strong {
+    color: var(--accent-primary);
+    margin-right: 0.5rem;
+}
+
+.comment-row span {
+    color: var(--text-primary);
+}
+
+.no-comments {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+    opacity: 0.7;
+}
+
+.comment-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comment-input-row input {
+    flex: 1;
+    background: var(--bg-color);
+    border: 1px solid var(--card-border);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.comment-input-row input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.comment-input-row button {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 0 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.action-btn.active {
+    color: var(--accent-primary);
+}
+
+/* ── Mobile Optimization ── */
+@media (max-width: 600px) {
+    .community-page { padding: 1rem; }
+    .post-items-grid { grid-template-columns: repeat(2, 1fr); }
+    .post-card { padding: 1rem; }
 }

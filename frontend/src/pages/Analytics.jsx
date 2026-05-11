@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { BarChart2, Palette, TrendingUp, Sun, AlertCircle, IndianRupee, HeartHandshake, Loader } from 'lucide-react';
+import { BarChart2, Palette, TrendingUp, Sun, AlertCircle, IndianRupee, HeartHandshake, Loader, Sparkles } from 'lucide-react';
 import './Analytics.css';
 
 // Color scheme for charts
@@ -158,6 +158,14 @@ const Analytics = () => {
             return item.lastWorn ? new Date(item.lastWorn) < oneYearAgo : false;
         }
     }).sort((a,b) => new Date(a.lastWorn || a.createdAt) - new Date(b.lastWorn || b.createdAt)).slice(0, 4);
+    
+    // 6. Vibe of the Week (Derived directly to avoid infinite loops)
+    const topColor = colorData[0]?.[0] || 'diverse';
+    const topCat = Object.entries(categoryCount).sort((a,b) => b[1]-a[1])[0]?.[0] || 'items';
+    const topSeason = [...seasonData].sort((a,b) => b.count-a.count)[0]?.season || 'all';
+    const vibeInsight = items.length > 0 
+        ? `Your closet is currently leaning towards a **${topColor}** palette with a focus on **${topCat}**. You're prepared for **${topSeason}** style!`
+        : "";
 
     return (
         <div className="analytics-page">
@@ -166,6 +174,21 @@ const Analytics = () => {
                 <h1 className="gradient-text">Wardrobe Analytics</h1>
                 <p className="subtitle">Data-driven insights into your style, spending, and wardrobe gaps.</p>
             </header>
+
+            {/* AI Vibe Section */}
+            {vibeInsight && (
+                <div className="vibe-card glass-card fadeIn">
+                    <div className="vibe-content">
+                        <div className="vibe-icon-wrap">
+                            <Sparkles size={24} className="highlight" />
+                        </div>
+                        <div className="vibe-text">
+                            <h3>AI Closet Insight</h3>
+                            <p dangerouslySetInnerHTML={{ __html: vibeInsight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Summary Row */}
             <div className="analytics-summary-row">

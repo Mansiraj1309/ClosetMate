@@ -7,32 +7,13 @@ import './AddItemModal.css';
 import { removeBackground } from '@imgly/background-removal';
 import heic2any from 'heic2any';
 
-// ── Dropdown options ──────────────────────────────────────────
+import { CLOTHING_CATEGORIES, FORMALITY_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS } from '../constants';
 
-const CATEGORIES = ['Tops', 'Bottoms', 'Dresses / Suits', 'Outerwear', 'Shoes', 'Accessories', 'Activewear', 'Ethnic'];
-
-const TYPE_MAP = {
-    'Tops': ['T-shirt', 'Shirt', 'Blouse', 'Kurti', 'Sweater', 'Hoodie', 'Tank Top', 'Crop Top', 'Polo'],
-    'Bottoms': ['Jeans', 'Trousers', 'Shorts', 'Skirt', 'Palazzo', 'Leggings', 'Chinos', 'Joggers'],
-    'Dresses / Suits': ['Casual Dress', 'Formal Dress', 'Maxi Dress', 'Suit (2‑piece)', 'Suit (3‑piece)', 'Jumpsuit'],
-    'Outerwear': ['Jacket', 'Blazer', 'Coat', 'Cardigan', 'Hoodie', 'Windbreaker'],
-    'Shoes': ['Sneakers', 'Boots', 'Sandals', 'Heels', 'Formal Shoes', 'Loafers', 'Slides'],
-    'Accessories': ['Watch', 'Belt', 'Bag', 'Sunglasses', 'Hat', 'Scarf', 'Jewelry', 'Tie'],
-    'Activewear': ['Sports Bra', 'Track Pants', 'Gym Shorts', 'Compression Tee', 'Running Shoes'],
-    'Ethnic': ['Kurta', 'Saree', 'Lehenga', 'Sherwani', 'Salwar Kameez', 'Dhoti'],
-};
-
-const GENDERS = ['Menswear', 'Womenswear', 'Unisex'];
-
+// ── Dropdown options (Derived from constants) ──────────────────
+const CATEGORIES = Object.keys(CLOTHING_CATEGORIES.Women); // Default categories
+const GENDERS = ['Men', 'Women', 'Unisex'];
 const COLORS = ['Black', 'White', 'Blue', 'Red', 'Green', 'Beige', 'Brown', 'Grey', 'Navy', 'Pink', 'Yellow', 'Orange', 'Purple', 'Maroon', 'Olive', 'Teal'];
-
-const SEASONS = ['All Season', 'Summer', 'Winter', 'Rainy'];
-
-const FORMALITIES = ['Casual', 'Smart Casual', 'Formal', 'Party', 'Ethnic'];
-
-const OCCASIONS = ['Casual', 'Office', 'Business', 'Party', 'Wedding', 'Date Night', 'Festival', 'Travel', 'Gym', 'College'];
-
-const STYLES = ['Minimal', 'Streetwear', 'Sporty', 'Elegant', 'Vintage', 'Classic', 'Boho', 'Formal', 'Casual'];
+const OCCASIONS = ['Casual', 'Office', 'Wedding', 'Date Night', 'Festival', 'Travel', 'Gym', 'College', 'Party'];
 
 // ── Component ─────────────────────────────────────────────────
 
@@ -54,9 +35,10 @@ const INITIAL_FORM = {
 };
 
 const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => {
-    const [file, setFile] = useState(null);               // raw file from picker
-    const [processedFile, setProcessedFile] = useState(null); // after bg removal
-    const [previewUrl, setPreviewUrl] = useState(null);   // canvas preview
+    const [step, setStep] = useState(1);
+    const [file, setFile] = useState(null);
+    const [processedFile, setProcessedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAutoTagging, setIsAutoTagging] = useState(false);
@@ -88,21 +70,27 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 purchasePrice: editItem.purchasePrice || '',
                 purchaseDate: editItem.purchaseDate ? new Date(editItem.purchaseDate).toISOString().split('T')[0] : '',
             });
-            setFile(null);
-            setProcessedFile(null);
-            setPreviewUrl(null);
-            setBgRemoved(false);
         } else {
             setFormData(INITIAL_FORM);
-            setFile(null);
-            setProcessedFile(null);
-            setPreviewUrl(null);
-            setBgRemoved(false);
         }
-    }, [editItem]);
+        // Always reset file/preview states when modal opens or editItem changes
+        setFile(null);
+        setProcessedFile(null);
+        setPreviewUrl(null);
+        setBgRemoved(false);
+        setBgError('');
+        setAutoTagError('');
+    }, [editItem, isOpen]);
 
-    // Derive available types when category changes
-    const typeOptions = useMemo(() => TYPE_MAP[formData.category] || [], [formData.category]);
+    // Derive available types when category/gender changes
+    const typeOptions = useMemo(() => {
+        const genderCats = CLOTHING_CATEGORIES[formData.gender] || CLOTHING_CATEGORIES.Unisex;
+        return genderCats[formData.category] || [];
+    }, [formData.category, formData.gender]);
+
+    const categoryOptions = useMemo(() => {
+        return Object.keys(CLOTHING_CATEGORIES[formData.gender] || CLOTHING_CATEGORIES.Unisex);
+    }, [formData.gender]);
 
     if (!isOpen) return null;
 
@@ -335,8 +323,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                     const newItem = await res.json();
                     onAdd(newItem);
                     onClose();
-                    setFile(null);
-                    setFormData(INITIAL_FORM);
+                    // State will be reset by the useEffect when modal closes/opens
                 } else {
                     alert('Failed to add item. Check server logs.');
                 }
@@ -349,208 +336,151 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
         }
     };
 
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content glass-card">
-                <button className="close-btn" onClick={onClose}><X size={20} /></button>
-                <h2>{isEditMode ? 'Edit Item' : 'Add to Wardrobe'}</h2>
+    const nextStep = () => setStep(prev => prev + 1);
+    const prevStep = () => setStep(prev => prev - 1);
 
-                <form onSubmit={handleSubmit} className="add-item-form">
-                    {/* Image upload — only for new items */}
-                    {!isEditMode && (
+    const renderStep = () => {
+        switch (step) {
+            case 1:
+                return (
+                    <div className="step-container fadeIn">
+                        <p className="step-desc">Start by uploading a photo of your item.</p>
                         <div className="form-group file-upload">
-                            {/* Upload / Preview area */}
                             <label htmlFor="file-upload" className={`upload-btn ${previewUrl ? 'upload-btn-compact' : ''}`}>
                                 {isConverting ? (
-                                    <div className="upload-preview-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px' }}>
-                                        <Loader className="spin-icon" size={30} style={{ margin: 'auto', color: 'var(--accent-primary)' }}/>
-                                        <span style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>Processing HEIC format...</span>
+                                    <div className="upload-preview-wrap flex-center">
+                                        <Loader className="spin" size={30} color="var(--accent-primary)" />
+                                        <span>Converting HEIC...</span>
                                     </div>
                                 ) : previewUrl ? (
                                     <div className="upload-preview-wrap">
                                         <img src={previewUrl} alt="preview" className="upload-preview-img" />
-                                        {bgRemoved && (
-                                            <div className="bg-removed-badge">
-                                                <CheckCircle size={13} /> Clean Background
-                                            </div>
-                                        )}
+                                        {bgRemoved && <div className="bg-removed-badge"><CheckCircle size={13} /> Clean Look</div>}
                                     </div>
                                 ) : (
-                                    <><Upload size={20} /> Upload or Capture Photo</>
+                                    <><Upload size={24} /> <span>Tap to Upload or Scan</span></>
                                 )}
                             </label>
-                            <input id="file-upload" type="file" accept="image/*,.heic,.heif" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} disabled={isConverting} />
+                            <input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
 
-                            {/* Background removal button */}
                             {file && !bgRemoved && (
-                                <button
-                                    type="button"
-                                    className={`bgremove-btn ${isRemovingBg ? 'bgremove-loading' : ''}`}
-                                    onClick={handleRemoveBackground}
-                                    disabled={isRemovingBg}
-                                >
-                                    {isRemovingBg ? (
-                                        <><Loader size={15} className="spin-icon" /> Removing background…</>
-                                    ) : (
-                                        <><Image size={15} /> 🪄 Remove Background</>
-                                    )}
+                                <button type="button" className={`bgremove-btn ${isRemovingBg ? 'loading' : ''}`} onClick={handleRemoveBackground} disabled={isRemovingBg}>
+                                    {isRemovingBg ? <><Loader size={16} className="spin" /> Removing BG...</> : <><Image size={16} /> 🪄 Remove Background</>}
                                 </button>
                             )}
-                            {bgRemoved && (
-                                <div className="bg-success-note">
-                                    <CheckCircle size={14} /> Background removed ✓ &nbsp;
-                                    <button type="button" className="bg-redo-btn" onClick={() => { setBgRemoved(false); setProcessedFile(null); setPreviewUrl(URL.createObjectURL(file)); }}>
-                                        Undo
-                                    </button>
-                                </div>
-                            )}
-                            {bgError && <p className="autotag-error">{bgError}</p>}
-
-                            {/* Auto-tag button */}
-                            {file && (
-                                <button
-                                    type="button"
-                                    className={`autotag-btn ${isAutoTagging ? 'autotag-loading' : ''}`}
-                                    onClick={handleAutoTag}
-                                    disabled={isAutoTagging || isRemovingBg}
-                                >
-                                    {isAutoTagging
-                                        ? <><Loader size={15} className="spin-icon" /> Analyzing…</>
-                                        : <><Sparkles size={15} /> ✨ Auto-tag with AI</>
-                                    }
-                                </button>
-                            )}
-                            {autoTagError && <p className="autotag-error">{autoTagError}</p>}
                         </div>
-                    )}
-                    {isEditMode && editItem.imageUrl && (
-                        <div className="edit-image-preview">
-                            <img src={editItem.imageUrl} alt={editItem.name || 'item'} />
-                        </div>
-                    )}
-
-                    {/* Name */}
-                    <div className="form-group">
-                        <label>Name (optional)</label>
-                        <input type="text" name="name" placeholder="e.g. Favourite navy blazer" value={formData.name} onChange={handleChange} />
+                        <button type="button" className="cta-button" onClick={handleAutoTagAndNext} disabled={!file || isRemovingBg || isAutoTagging}>
+                            {isAutoTagging ? <><Loader size={18} className="spin" /> AI Analyzing...</> : <><Sparkles size={18} /> Next: AI Auto-Tag</>}
+                        </button>
                     </div>
-
-                    {/* Category + Type */}
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Category</label>
-                            <select name="category" value={formData.category} onChange={handleChange}>
-                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
+                );
+            case 2:
+                return (
+                    <div className="step-container fadeIn">
+                        <p className="step-desc">AI has auto-filled these details. Quick check?</p>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Gender</label>
+                                <select name="gender" value={formData.gender} onChange={handleChange}>
+                                    {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Category</label>
+                                <select name="category" value={formData.category} onChange={handleChange}>
+                                    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Specific Type</label>
+                                <select name="type" value={formData.type} onChange={handleChange}>
+                                    <option value="">— Select —</option>
+                                    {typeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Color</label>
+                                <select name="color" value={formData.color} onChange={handleChange}>
+                                    {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                                    <option value="__custom">Other…</option>
+                                </select>
+                                {formData.color === '__custom' && (
+                                    <input type="text" name="customColor" placeholder="Color name" value={formData.customColor} onChange={handleChange} className="mt-2" />
+                                )}
+                            </div>
+                        </div>
+                        <div className="btn-group">
+                            <button type="button" className="cta-button secondary-btn" onClick={prevStep}>Back</button>
+                            <button type="button" className="cta-button" onClick={nextStep}>Next: Final Details</button>
+                        </div>
+                    </div>
+                );
+            case 3:
+                return (
+                    <div className="step-container fadeIn">
+                        <p className="step-desc">Almost there! Add more context if you want.</p>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Season</label>
+                                <select name="season" value={formData.season} onChange={handleChange}>
+                                    {SEASON_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Formality</label>
+                                <select name="formality" value={formData.formality} onChange={handleChange}>
+                                    {FORMALITY_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
+                                </select>
+                            </div>
                         </div>
                         <div className="form-group">
-                            <label>Type</label>
-                            <select name="type" value={formData.type} onChange={handleChange}>
+                            <label>Style Vibe</label>
+                            <select name="style" value={formData.style} onChange={handleChange}>
                                 <option value="">— Select —</option>
-                                {typeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Gender + Color */}
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Gender</label>
-                            <select name="gender" value={formData.gender} onChange={handleChange}>
-                                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                                {STYLE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className="form-group">
-                            <label>Color</label>
-                            <select name="color" value={formData.color} onChange={handleChange}>
-                                {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
-                                <option value="__custom">Other…</option>
-                            </select>
-                            {formData.color === '__custom' && (
-                                <input type="text" name="customColor" placeholder="Enter color" value={formData.customColor} onChange={handleChange} style={{ marginTop: '0.5rem' }} required />
-                            )}
+                            <label>Purchase Price (₹)</label>
+                            <input type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} placeholder="e.g. 1999" />
+                        </div>
+                        <div className="btn-group">
+                            <button type="button" className="cta-button secondary-btn" onClick={prevStep}>Back</button>
+                            <button type="submit" className="cta-button" disabled={isSubmitting}>
+                                {isSubmitting ? 'Saving...' : 'Finish & Save'}
+                            </button>
                         </div>
                     </div>
+                );
+            default:
+                return null;
+        }
+    };
 
-                    {/* Season + Formality */}
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Season</label>
-                            <select name="season" value={formData.season} onChange={handleChange}>
-                                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+    const handleAutoTagAndNext = async () => {
+        await handleAutoTag();
+        nextStep();
+    };
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content glass-card mobile-optimized">
+                <button className="close-btn" onClick={onClose}><X size={20} /></button>
+                <div className="modal-header-simple">
+                    <h2>{isEditMode ? 'Edit Item' : 'Add Item'}</h2>
+                    {!isEditMode && (
+                        <div className="step-indicator">
+                            <span className={step >= 1 ? 'active' : ''}></span>
+                            <span className={step >= 2 ? 'active' : ''}></span>
+                            <span className={step >= 3 ? 'active' : ''}></span>
                         </div>
-                        <div className="form-group">
-                            <label>Formality</label>
-                            <select name="formality" value={formData.formality} onChange={handleChange}>
-                                {FORMALITIES.map(f => <option key={f} value={f}>{f}</option>)}
-                            </select>
-                        </div>
-                    </div>
+                    )}
+                </div>
 
-                    {/* Style */}
-                    <div className="form-group">
-                        <label>Style</label>
-                        <select name="style" value={formData.style} onChange={handleChange}>
-                            <option value="">— None —</option>
-                            {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-
-                    {/* Occasions — multi-select chips */}
-                    <div className="form-group">
-                        <label>Occasions</label>
-                        <div className="chip-grid">
-                            {OCCASIONS.map(occ => (
-                                <button
-                                    key={occ}
-                                    type="button"
-                                    className={`chip ${formData.occasions.includes(occ) ? 'chip-active' : ''}`}
-                                    onClick={() => toggleOccasion(occ)}
-                                >
-                                    {occ}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Tags + Notes */}
-                    <div className="form-group">
-                        <label>Tags (comma separated)</label>
-                        <input type="text" name="tags" placeholder="e.g. silk, date-night, summer" value={formData.tags} onChange={handleChange} />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Notes (optional)</label>
-                        <input type="text" name="styleNotes" placeholder="e.g. Goes great with white sneakers" value={formData.styleNotes} onChange={handleChange} />
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Purchase Price (₹) <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional</span></label>
-                            <input
-                                type="number"
-                                name="purchasePrice"
-                                placeholder="e.g. 1299"
-                                value={formData.purchasePrice}
-                                onChange={handleChange}
-                                min="0"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Purchase Date <span style={{ color: 'var(--text-secondary)', fontWeight: 400, fontSize: '0.78rem' }}>— optional</span></label>
-                            <input
-                                type="date"
-                                name="purchaseDate"
-                                value={formData.purchaseDate}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-
-                    <button type="submit" className="cta-button submit-btn" disabled={isSubmitting}>
-                        {isSubmitting ? (isEditMode ? 'Saving...' : 'Uploading...') : (isEditMode ? 'Save Changes' : 'Save to Wardrobe')}
-                    </button>
+                <form onSubmit={handleSubmit} className="add-item-form-progressive">
+                    {renderStep()}
                 </form>
             </div>
         </div>

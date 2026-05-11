@@ -53,7 +53,8 @@ export const WeatherProvider = ({ children }) => {
             () => {
                 setError('Location permission denied.');
                 setLoading(false);
-            }
+            },
+            { timeout: 10000 } // 10 second timeout
         );
     }, []);
 

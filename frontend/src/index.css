@@ -2,22 +2,44 @@
    DESIGN SYSTEM & VARIABLES
    ========================================= */
 :root {
-  --bg-color: #0d0f14;
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-
+  /* Common variables */
   --accent-primary: #818cf8;
   --accent-secondary: #c084fc;
   --accent-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-
   --blur-xl: blur(24px);
   --shadow-glow: 0 0 40px rgba(129, 140, 248, 0.15);
-
   --border-radius-lg: 24px;
   --border-radius-md: 16px;
   --border-radius-sm: 8px;
+  --transition-speed: 0.3s;
+}
+
+/* Light Theme Variables */
+.light-mode {
+  --bg-color: #f8fafc;
+  --bg-gradient: radial-gradient(circle at 15% 50%, rgba(129, 140, 248, 0.05) 0%, transparent 50%),
+                 radial-gradient(circle at 85% 30%, rgba(192, 132, 252, 0.05) 0%, transparent 50%);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(129, 140, 248, 0.1);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --nav-bg: rgba(255, 255, 255, 0.8);
+}
+
+/* Dark Theme Variables */
+.dark-mode {
+  --bg-color: #0d0f14;
+  --bg-gradient: radial-gradient(circle at 15% 50%, rgba(129, 140, 248, 0.08) 0%, transparent 50%),
+                 radial-gradient(circle at 85% 30%, rgba(192, 132, 252, 0.08) 0%, transparent 50%);
+  --card-bg: rgba(15, 17, 26, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --nav-bg: rgba(255, 255, 255, 0.03);
 }
 
 * {
@@ -32,10 +54,10 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(circle at 15% 50%, rgba(129, 140, 248, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(192, 132, 252, 0.08) 0%, transparent 50%);
+  background-image: var(--bg-gradient);
+  transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
+
 
 /* =========================================
      LAYOUT & NAVIGATION
@@ -71,7 +93,27 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .hamburger-btn {
@@ -202,10 +244,11 @@ body {
   font-size: clamp(3rem, 5vw, 4.5rem);
   font-weight: 700;
   line-height: 1.1;
-  background: linear-gradient(to right, #ffffff 30%, #a5b4fc 100%);
+  background: linear-gradient(to right, var(--text-primary) 30%, var(--accent-primary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: -1px;
 }
 

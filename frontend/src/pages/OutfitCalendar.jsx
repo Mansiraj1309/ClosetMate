@@ -14,6 +14,13 @@ const OutfitCalendar = () => {
     const [loadingLog, setLoadingLog] = useState(false);
     const [panelOpen, setPanelOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Get YYYY-MM for current calendar month
     const getMonthStr = (date) => {
@@ -55,11 +62,13 @@ const OutfitCalendar = () => {
         setSelectedDate(date);
         const existingLog = getLogForDate(date);
         if (existingLog) {
-            setPanelOpen(true);
             setSelectedLog(existingLog);
+            setPanelOpen(true);
         } else {
-            setPanelOpen(false);
-            setSelectedLog(null);
+            if (!isMobile) {
+                setPanelOpen(false);
+                setSelectedLog(null);
+            }
         }
     };
 
@@ -109,7 +118,7 @@ const OutfitCalendar = () => {
     };
 
     return (
-        <div className="calendar-page">
+        <div className="calendar-page fadeIn">
             <header className="calendar-header">
                 <CalendarDays size={40} className="header-icon" />
                 <h1 className="gradient-text">Outfit Calendar</h1>
@@ -134,58 +143,70 @@ const OutfitCalendar = () => {
                     </div>
                 </div>
 
-                {/* Side Panel */}
-                <div className={`log-panel glass-card ${panelOpen ? 'panel-open' : 'panel-empty'}`}>
+                {/* Side Panel (Desktop) or Bottom Drawer (Mobile) */}
+                {isMobile && panelOpen && (
+                    <div className="drawer-backdrop" onClick={() => setPanelOpen(false)} />
+                )}
+                
+                <div className={`log-panel glass-card ${isMobile ? 'bottom-drawer' : ''} ${panelOpen ? 'panel-open' : 'panel-empty'}`}>
+                    {isMobile && <div className="drawer-handle" />}
+                    
                     {panelOpen && selectedLog ? (
-                        <>
+                        <div className="panel-inner fadeIn">
                             <div className="panel-header">
                                 <div>
                                     <h3>What you wore</h3>
                                     <p className="panel-date">{formatDisplayDate(selectedDate)}</p>
                                 </div>
-                                <button className="icon-btn" onClick={() => setPanelOpen(false)}>
-                                    <X size={18} />
+                                <button className="icon-btn close-panel" onClick={() => setPanelOpen(false)}>
+                                    <X size={20} />
                                 </button>
                             </div>
 
-                            {selectedLog.occasion && (
-                                <div className="log-occasion-tag">
-                                    🎯 {selectedLog.occasion}
-                                </div>
-                            )}
-
-                            <div className="log-items-grid">
-                                {selectedLog.itemIds?.map(item => (
-                                    <div key={item._id} className="log-item-card">
-                                        <img src={item.imageUrl} alt={item.name || item.category} />
-                                        <div className="log-item-info">
-                                            <span className="log-item-name">{item.name || `${item.color} ${item.type || item.category}`}</span>
-                                            <span className="log-item-cat">{item.category}</span>
-                                        </div>
+                            <div className="log-scroll-area">
+                                {selectedLog.occasion && (
+                                    <div className="log-occasion-tag">
+                                        🎯 {selectedLog.occasion}
                                     </div>
-                                ))}
-                            </div>
+                                )}
 
-                            {selectedLog.notes && (
-                                <p className="log-notes">📝 {selectedLog.notes}</p>
-                            )}
+                                <div className="log-items-grid">
+                                    {selectedLog.itemIds?.map(item => (
+                                        <div key={item._id} className="log-item-card">
+                                            <div className="log-item-img-wrap">
+                                                <img src={item.imageUrl} alt={item.name || item.category} />
+                                            </div>
+                                            <div className="log-item-info">
+                                                <span className="log-item-name">{item.name || `${item.color} ${item.type || item.category}`}</span>
+                                                <span className="log-item-cat">{item.category}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {selectedLog.notes && (
+                                    <div className="log-notes-section">
+                                        <p className="log-notes">📝 {selectedLog.notes}</p>
+                                    </div>
+                                )}
+                            </div>
 
                             <button
                                 className="delete-log-btn"
                                 onClick={handleDeleteLog}
                                 disabled={deleteLoading}
                             >
-                                <Trash2 size={15} />
-                                {deleteLoading ? 'Removing...' : 'Remove Log'}
+                                <Trash2 size={16} />
+                                {deleteLoading ? 'Removing...' : 'Remove from History'}
                             </button>
-                        </>
-                    ) : (
+                        </div>
+                    ) : !isMobile ? (
                         <div className="panel-placeholder">
                             <Shirt size={48} className="placeholder-icon" />
                             <p>Select a day with a <span className="highlight">●</span> dot to view your outfit.</p>
                             <p className="placeholder-hint">Log outfits from the AI Stylist page.</p>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
 

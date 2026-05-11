@@ -184,19 +184,22 @@ router.post('/analyze-image', auth, async (req, res) => {
             return res.status(400).json({ message: 'imageBase64 and mimeType are required' });
         }
 
-        const prompt = `You are a fashion tagging AI. Analyze this clothing image and return structured metadata.
+        const prompt = `You are a premium fashion AI stylist. Analyze this clothing image and return structured metadata.
 
-Return ONLY a raw JSON object (no markdown, no backticks) with EXACTLY these fields:
+Return ONLY a raw JSON object with EXACTLY these fields:
 {
-  "category": one of ["Tops", "Bottoms", "Dresses / Suits", "Outerwear", "Shoes", "Accessories", "Activewear", "Ethnic"],
-  "type": specific sub-type (e.g. "T-shirt", "Jeans", "Sneakers", "Kurta" etc.),
-  "color": primary color (one of: Black, White, Blue, Red, Green, Beige, Brown, Grey, Navy, Pink, Yellow, Orange, Purple, Maroon, Olive, Teal — or a descriptive color name if none match),
-  "season": one of ["All Season", "Summer", "Winter", "Rainy"],
-  "formality": one of ["Casual", "Smart Casual", "Formal", "Party", "Ethnic"],
-  "style": one of ["Minimal", "Streetwear", "Sporty", "Elegant", "Vintage", "Classic", "Boho", "Formal", "Casual"] or empty string,
-  "occasions": array of applicable occasions from ["Casual", "Office", "Business", "Party", "Wedding", "Date Night", "Festival", "Travel", "Gym", "College"],
-  "styleNotes": a single short sentence describing styling tips for this item
-}`;
+  "gender": "Men", "Women" or "Unisex",
+  "category": One of ["Tops", "Bottoms", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
+  "type": Specific type from the category (e.g., "Oversized T-shirt", "Palazzo", "Saree", "Heels", "Kurta Pajama"),
+  "color": Primary color name (e.g., "Navy Blue", "Emerald Green", "Burgundy"),
+  "season": One of ["Summer", "Winter", "Rainy", "All Season"],
+  "formality": One of ["Casual", "Semi-Formal", "Formal", "Party", "Ethnic", "Sporty"],
+  "style": One of ["Minimal", "Streetwear", "Classic", "Bohemian", "Gothic", "Sporty", "Vintage", "Chic"],
+  "occasions": Array of ["Casual", "Office", "Wedding", "Date Night", "Festival", "Travel", "Gym", "College", "Party"],
+  "styleNotes": A single premium styling tip (e.g., "Pairs perfectly with high-waisted trousers for a chic office look.")
+}
+
+Be specific and accurate. If it's a specific Indian ethnic wear, identify it correctly (e.g., "Sherwani", "Anarkali").`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -216,6 +219,59 @@ Return ONLY a raw JSON object (no markdown, no backticks) with EXACTLY these fie
     } catch (err) {
         console.error('Auto-tag error:', err);
         res.status(500).json({ message: 'Failed to analyze image. Try tagging manually.' });
+    }
+});
+
+// @route   POST /api/wardrobe/analyze-tag
+// @desc    Use Gemini Vision to extract details from a clothing tag image (OCR + AI)
+router.post('/analyze-tag', auth, async (req, res) => {
+    try {
+        const { imageBase64, mimeType } = req.body;
+        if (!imageBase64 || !mimeType) {
+            return res.status(400).json({ message: 'imageBase64 and mimeType are required' });
+        }
+
+        const prompt = `You are an expert fashion inventory assistant. Analyze this image of a clothing tag and extract ALL visible technical and style information.
+
+Return ONLY a raw JSON object with these fields (use null if not found):
+{
+  "brand": "Brand name (e.g. AZORTE, ZARA)",
+  "name": "Full product name as on tag",
+  "category": "One of [Tops, Bottoms, Ethnic Wear, Footwear, Accessories, Jewelry, Outerwear, Activewear]",
+  "type": "Specific item type (e.g. Saree, Kurta, T-shirt, Heels)",
+  "size": "Size as on tag (e.g. L, 42, 32)",
+  "color": "Color name as on tag or visible",
+  "price": Number (Price value only, extract from symbols like ₹, MRP, $),
+  "currency": "Currency code (e.g. INR, USD)",
+  "articleId": "Product ID/Article Number/SKU",
+  "fabric": "Material composition (e.g. 100% Cotton)",
+  "careInstructions": "Short care summary",
+  "style": "Estimated style aesthetic",
+  "season": "Estimated season",
+  "occasions": ["Array", "of", "occasions"],
+  "formality": "Formality level"
+}
+
+If you see multiple prices, use the current sale price or MRP. Be highly accurate with the brand and price.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [
+                {
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType, data: imageBase64 } }
+                    ]
+                }
+            ],
+        });
+
+        let aiText = response.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const tagData = JSON.parse(aiText);
+        res.json(tagData);
+    } catch (err) {
+        console.error('Tag analyze error:', err);
+        res.status(500).json({ message: 'Failed to read tag. Try a clearer photo or enter manually.' });
     }
 });
 
