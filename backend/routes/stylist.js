@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
-// Using fetch for direct API calls to avoid SDK issues
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
 
 // @route   POST /api/stylist/recommend
 // @desc    Get an outfit recommendation + shopping suggestions for the logged-in user
@@ -96,18 +97,28 @@ Rules:
 - Always suggest real Indian e-commerce stores (Myntra, Ajio, Amazon India, Flipkart, Tata CLiQ) with their actual website URLs.
 - Prices should be realistic estimates in Indian Rupees (₹).
 `;
-        const aiRes = await fetch(GEMINI_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-
-        const aiData = await aiRes.json();
-        if (!aiRes.ok) throw new Error(aiData.error?.message || 'Gemini API Error');
-
-        let aiText = aiData.candidates[0].content.parts[0].text;
+        let result;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (attempts < maxAttempts) {
+            try {
+                result = await model.generateContent(prompt);
+                break;
+            } catch (err) {
+                if (err.status === 429 && attempts < maxAttempts - 1) {
+                    attempts++;
+                    console.log(`Rate limited. Retry attempt ${attempts}...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5s
+                } else {
+                    throw err;
+                }
+            }
+        }
+        
+        const response = await result.response;
+        let aiText = response.text();
+        
         // Strip markdown code fences if present
         aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
@@ -225,18 +236,9 @@ Rules:
 - Prices should be in Indian Rupees (₹). Real stores only.
 `;
 
-        const aiRes = await fetch(GEMINI_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-
-        const aiData = await aiRes.json();
-        if (!aiRes.ok) throw new Error(aiData.error?.message || 'Gemini API Error');
-
-        let aiText = aiData.candidates[0].content.parts[0].text;
+        const result = await model.generateContent(prompt);
+        const aiResponse = await result.response;
+        let aiText = aiResponse.text();
         aiText = aiText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
         const parsedResponse = JSON.parse(aiText);

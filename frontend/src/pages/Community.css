@@ -35,7 +35,20 @@
 
 @media (max-width: 768px) {
     .community-highlights {
-        grid-template-columns: 1fr;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 0.5rem;
+        gap: 0.75rem;
+        scrollbar-width: none;
+    }
+    .community-highlights::-webkit-scrollbar {
+        display: none;
+    }
+    .highlight-card {
+        flex: 0 0 85%;
+        scroll-snap-align: center;
     }
 }
 
@@ -101,6 +114,19 @@
 
 .highlight-card.battle {
     background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, transparent 100%);
+}
+
+@media (max-width: 768px) {
+    .community-header {
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
+    }
+    .community-header h1 {
+        font-size: 1.8rem;
+    }
+    .community-header .subtitle {
+        font-size: 0.9rem;
+    }
 }
 
 .community-grid {
@@ -226,7 +252,7 @@
     color: var(--text-secondary);
     font-weight: 600;
     cursor: pointer;
-    padding: 0.4rem 0.6rem;
+    padding: 0.6rem 0.8rem;
     border-radius: 6px;
     transition: all 0.2s;
 }

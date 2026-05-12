@@ -53,5 +53,10 @@
 	<string>To save processed photos of your clothes.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>To provide local weather-based outfit recommendations.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

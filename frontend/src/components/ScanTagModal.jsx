@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Zap, CheckCircle, Loader, AlertCircle, Sparkles } from 'lucide-react';
 import jsQR from 'jsqr';
+import API_BASE from '../api';
 import './ScanTagModal.css';
 
 const MAPPED_ITEMS = {
@@ -8,7 +9,7 @@ const MAPPED_ITEMS = {
     "AZORTE": { name: "Azorte Fashion Item", brand: "Azorte", color: "Unknown", category: "Tops" }
 };
 
-const ScanTagModal = ({ isOpen, onClose }) => {
+const ScanTagModal = ({ isOpen, onClose, onScanned }) => {
     const [step, setStep] = useState('idle'); // 'idle' | 'scanning' | 'success' | 'error'
     const [scannedItem, setScannedItem] = useState(null);
     const [errorMsg, setErrorMsg] = useState('');
@@ -205,7 +206,7 @@ const ScanTagModal = ({ isOpen, onClose }) => {
                                 </button>
                             </div>
 
-                            <button className="cta-button full-width" onClick={onClose}>
+                            <button className="cta-button full-width" onClick={() => onScanned(scannedItem)}>
                                 Save to Closet
                             </button>
                         </div>

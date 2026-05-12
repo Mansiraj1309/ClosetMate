@@ -67,7 +67,7 @@ const Dashboard = () => {
     }, [stats]);
 
     return (
-        <main className="dashboard-page">
+        <main className="dashboard-page" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(20px + env(safe-area-inset-bottom))' }}>
             {/* 1. New Hero: Today's Recommendation */}
             <section className="recommendation-hero">
                 <div className="hero-content">
@@ -167,7 +167,7 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-box">
                             <span className="stat-number">{stats.totalCategories}</span>
-                            <span className="stat-label">Cats</span>
+                            <span className="stat-label">Categories</span>
                         </div>
                         <div className="stat-box">
                             <span className="stat-number">{stats.unusedCount || 0}</span>

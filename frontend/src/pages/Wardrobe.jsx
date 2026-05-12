@@ -220,8 +220,14 @@ const Wardrobe = () => {
                                 )}
                             </div>
                             <div className="item-details">
-                                <h4>{item.name || `${item.color} ${item.category}`}</h4>
-                                {item.type && <span className="type-label">{item.type}</span>}
+                                <div className="item-main-info">
+                                    <h4>{item.name || `${item.color} ${item.category}`}</h4>
+                                    {item.brand && <span className="brand-label">{item.brand}</span>}
+                                </div>
+                                <div className="type-size-row">
+                                    {item.type && <span className="type-label">{item.type}</span>}
+                                    {item.size && <span className="size-label">Size: {item.size}</span>}
+                                </div>
                                 <div className="item-tags">
                                     <span className="tag">{item.formality}</span>
                                     {item.style && <span className="tag">{item.style}</span>}

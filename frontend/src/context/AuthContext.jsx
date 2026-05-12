@@ -72,8 +72,23 @@ export const AuthProvider = ({ children }) => {
         return data.budget;
     };
 
+    const updateProfile = async (name) => {
+        const res = await fetch(`${API_BASE}/api/auth/profile`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        setUser(data.user);
+        return data.user;
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateBudget }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateBudget, updateProfile }}>
             {!loading && children}
         </AuthContext.Provider>
     );

@@ -1,6 +1,6 @@
 .fab-container {
     position: fixed;
-    bottom: 85px;
+    bottom: 105px;
     right: 20px;
     display: flex;
     flex-direction: column;
@@ -43,6 +43,7 @@
     pointer-events: none;
     transform: translateY(20px);
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .fab-container.open .fab-options {

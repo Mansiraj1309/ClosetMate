@@ -3,6 +3,7 @@ import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { Heart, MessageSquare, Compass, Share2, Award, Sparkles } from 'lucide-react';
+import { Share } from '@capacitor/share';
 import './Community.css';
 
 const Community = () => {
@@ -90,20 +91,17 @@ const Community = () => {
     };
 
     const handleShare = async (post) => {
-        const shareData = {
-            title: 'ClosetMate Style',
-            text: `Check out this ${post.occasion} outfit on ClosetMate!`,
-            url: window.location.href,
-        };
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert('Link copied to clipboard!');
-            }
+            await Share.share({
+                title: 'ClosetMate Style',
+                text: `Check out this ${post.occasion} outfit on ClosetMate!`,
+                url: 'https://closetmate-app.vercel.app',
+                dialogTitle: 'Share this look',
+            });
         } catch (err) {
             console.error('Error sharing:', err);
+            navigator.clipboard.writeText('https://closetmate-app.vercel.app');
+            alert('Link copied to clipboard!');
         }
     };
 
@@ -149,7 +147,7 @@ const Community = () => {
     return (
         <div className="community-page">
             <header className="community-header">
-                <Compass size={40} className="header-icon" />
+                <Compass size={32} className="header-icon" />
                 <h1 className="gradient-text">Style Community</h1>
                 <p className="subtitle">Explore, vote, and get inspired by the ClosetMate family.</p>
             </header>

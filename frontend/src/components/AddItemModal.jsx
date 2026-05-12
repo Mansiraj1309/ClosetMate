@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import API_BASE from '../api';
-import { Upload, X, Sparkles, Loader, Image, CheckCircle } from 'lucide-react';
+import { Upload, X, Sparkles, Loader, Image, CheckCircle, Camera } from 'lucide-react';
 import './AddItemModal.css';
 
 // @imgly/background-removal is now installed locally (no CDN needed)
@@ -19,6 +19,8 @@ const OCCASIONS = ['Casual', 'Office', 'Wedding', 'Date Night', 'Festival', 'Tra
 
 const INITIAL_FORM = {
     name: '',
+    brand: '',
+    size: '',
     category: 'Tops',
     type: '',
     gender: 'Unisex',
@@ -34,7 +36,7 @@ const INITIAL_FORM = {
     purchaseDate: '',
 };
 
-const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => {
+const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initialData }) => {
     const [step, setStep] = useState(1);
     const [file, setFile] = useState(null);
     const [processedFile, setProcessedFile] = useState(null);
@@ -69,7 +71,20 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 styleNotes: editItem.styleNotes || '',
                 purchasePrice: editItem.purchasePrice || '',
                 purchaseDate: editItem.purchaseDate ? new Date(editItem.purchaseDate).toISOString().split('T')[0] : '',
+                brand: editItem.brand || '',
+                size: editItem.size || '',
             });
+        } else if (initialData) {
+            setFormData({
+                ...INITIAL_FORM,
+                brand: initialData.brand || '',
+                size: initialData.size || '',
+                purchasePrice: initialData.price || '',
+                name: initialData.name || '',
+                style: initialData.style || '',
+                season: initialData.season || 'All Season',
+            });
+            setStep(2); // Jump to review step if pre-filled
         } else {
             setFormData(INITIAL_FORM);
         }
@@ -285,6 +300,8 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                         styleNotes: formData.styleNotes,
                         purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : null,
                         purchaseDate: formData.purchaseDate || undefined,
+                        brand: formData.brand,
+                        size: formData.size,
                     }),
                 });
 
@@ -312,6 +329,8 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                 payload.append('styleNotes', formData.styleNotes);
                 if (formData.purchasePrice) payload.append('purchasePrice', formData.purchasePrice);
                 if (formData.purchaseDate) payload.append('purchaseDate', formData.purchaseDate);
+                payload.append('brand', formData.brand);
+                payload.append('size', formData.size);
 
                 res = await fetch(`${API_BASE}/api/wardrobe`, {
                     method: 'POST',
@@ -346,22 +365,34 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                     <div className="step-container fadeIn">
                         <p className="step-desc">Start by uploading a photo of your item.</p>
                         <div className="form-group file-upload">
-                            <label htmlFor="file-upload" className={`upload-btn ${previewUrl ? 'upload-btn-compact' : ''}`}>
-                                {isConverting ? (
-                                    <div className="upload-preview-wrap flex-center">
-                                        <Loader className="spin" size={30} color="var(--accent-primary)" />
-                                        <span>Converting HEIC...</span>
-                                    </div>
-                                ) : previewUrl ? (
+                            {previewUrl ? (
+                                <label htmlFor="file-upload" className="upload-btn upload-btn-compact">
                                     <div className="upload-preview-wrap">
                                         <img src={previewUrl} alt="preview" className="upload-preview-img" />
                                         {bgRemoved && <div className="bg-removed-badge"><CheckCircle size={13} /> Clean Look</div>}
                                     </div>
-                                ) : (
-                                    <><Upload size={24} /> <span>Tap to Upload or Scan</span></>
-                                )}
-                            </label>
+                                </label>
+                            ) : isConverting ? (
+                                <div className="upload-btn flex-center">
+                                    <Loader className="spin" size={30} color="var(--accent-primary)" />
+                                    <span>Converting HEIC...</span>
+                                </div>
+                            ) : (
+                                <div className="photo-source-btns">
+                                    <label htmlFor="camera-upload" className="photo-source-btn">
+                                        <Camera size={22} />
+                                        <span>Take Photo</span>
+                                    </label>
+                                    <label htmlFor="file-upload" className="photo-source-btn">
+                                        <Upload size={22} />
+                                        <span>Gallery</span>
+                                    </label>
+                                </div>
+                            )}
+                            {/* Gallery picker */}
                             <input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                            {/* Camera direct */}
+                            <input id="camera-upload" type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
 
                             {file && !bgRemoved && (
                                 <button type="button" className={`bgremove-btn ${isRemovingBg ? 'loading' : ''}`} onClick={handleRemoveBackground} disabled={isRemovingBg}>
@@ -390,6 +421,16 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem }) => 
                                 <select name="category" value={formData.category} onChange={handleChange}>
                                     {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Brand</label>
+                                <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g. Zara" />
+                            </div>
+                            <div className="form-group">
+                                <label>Size</label>
+                                <input type="text" name="size" value={formData.size} onChange={handleChange} placeholder="e.g. M, 32" />
                             </div>
                         </div>
                         <div className="form-row">

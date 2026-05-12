@@ -319,6 +319,36 @@
     color: var(--text-secondary);
 }
 
+.item-main-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.brand-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+    background: rgba(129, 140, 248, 0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+}
+
+.type-size-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.size-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 .item-tags {
     display: flex;
     flex-wrap: wrap;

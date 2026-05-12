@@ -128,6 +128,36 @@
   border-color: var(--accent-primary);
 }
 
+/* Two-button photo picker (camera + gallery) */
+.photo-source-btns {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.photo-source-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.8rem 1rem;
+  border: 2px dashed rgba(129, 140, 248, 0.4);
+  border-radius: var(--border-radius-md);
+  color: var(--accent-primary);
+  cursor: pointer;
+  background: rgba(129, 140, 248, 0.05);
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.photo-source-btn:active {
+  background: rgba(129, 140, 248, 0.15);
+  transform: scale(0.97);
+}
+
 /* ── Image preview inside upload zone ──────── */
 
 .upload-btn-compact {

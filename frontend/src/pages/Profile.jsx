@@ -5,10 +5,26 @@ import { User, Mail, Shield, LogOut, Settings, ChevronRight, Moon, Sun } from 'l
 import './Profile.css';
 
 const Profile = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, updateProfile } = useAuth();
     const { isDarkMode, toggleTheme } = useTheme();
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [newName, setNewName] = React.useState(user?.name || '');
+    const [isSaving, setIsSaving] = React.useState(false);
 
     if (!user) return null;
+
+    const handleSave = async () => {
+        if (!newName.trim()) return;
+        setIsSaving(true);
+        try {
+            await updateProfile(newName);
+            setIsEditing(false);
+        } catch (err) {
+            alert("Failed to update profile");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <main className="profile-page fadeIn">
@@ -20,7 +36,25 @@ const Profile = () => {
                         <User size={40} />
                     )}
                 </div>
-                <h2>{user.username}</h2>
+                {isEditing ? (
+                    <div className="profile-edit-input-wrap">
+                        <input 
+                            type="text" 
+                            className="profile-name-input"
+                            value={newName} 
+                            onChange={(e) => setNewName(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="profile-edit-actions">
+                            <button onClick={handleSave} disabled={isSaving} className="save-btn">
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button onClick={() => setIsEditing(false)} className="cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                ) : (
+                    <h2>{user.name || user.username || 'ClosetMate User'}</h2>
+                )}
                 <p className="profile-email"><Mail size={14} /> {user.email || 'user@example.com'}</p>
             </div>
 
@@ -37,7 +71,7 @@ const Profile = () => {
                         <div className={`theme-switch ${isDarkMode ? 'on' : ''}`}></div>
                     </div>
                     
-                    <div className="settings-item glass-card">
+                    <div className="settings-item glass-card" onClick={() => setIsEditing(true)}>
                         <div className="item-left">
                             <div className="item-icon-wrap">
                                 <Settings size={20} />

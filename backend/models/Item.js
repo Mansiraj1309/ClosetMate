@@ -74,6 +74,14 @@ const itemSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    brand: {
+        type: String,
+        default: '',
+    },
+    size: {
+        type: String,
+        default: '',
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Item', itemSchema);

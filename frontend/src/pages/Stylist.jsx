@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, PlaneTakeoff, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
+import { Share } from '@capacitor/share';
 import './Stylist.css';
 
 const QUICK_PROMPTS = [
@@ -206,6 +207,34 @@ const Stylist = () => {
 const RecommendationCard = ({ recommendation, token }) => {
     const [logSuccess, setLogSuccess] = useState(false);
     const [logLoading, setLogLoading] = useState(false);
+    const [shareSuccess, setShareSuccess] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+
+    const handleShareToCommunity = async () => {
+        setShareLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/api/community`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    items: recommendation.outfit.map(i => i._id),
+                    occasion: recommendation.occasion || 'AI Recommended Look',
+                    description: recommendation.rationale
+                }),
+            });
+            if (res.ok) {
+                setShareSuccess(true);
+                setTimeout(() => setShareSuccess(false), 3000);
+            }
+        } catch (err) {
+            console.error('Error sharing to community:', err);
+        } finally {
+            setShareLoading(false);
+        }
+    };
 
     const handleLog = async () => {
         setLogLoading(true);
@@ -245,15 +274,24 @@ const RecommendationCard = ({ recommendation, token }) => {
                 <button className="rec-action-btn" onClick={handleLog} disabled={logLoading}>
                     {logSuccess ? <><CheckCircle size={14} /> Logged</> : <><CalendarCheck size={14} /> Log Outfit</>}
                 </button>
-                <button className="rec-action-btn secondary" onClick={() => {
-                    if (navigator.share) {
-                        navigator.share({ title: 'ClosetMate Look', text: recommendation.rationale, url: window.location.href });
-                    } else {
-                        alert('Sharing not supported on this browser. Link copied!');
-                        navigator.clipboard.writeText(window.location.href);
+                <button className={`rec-action-btn ${shareSuccess ? 'success' : ''}`} onClick={handleShareToCommunity} disabled={shareLoading}>
+                    {shareSuccess ? <><CheckCircle size={14} /> Shared</> : <><Compass size={14} /> Share to Community</>}
+                </button>
+                <button className="rec-action-btn secondary" onClick={async () => {
+                    try {
+                        await Share.share({
+                            title: 'ClosetMate Look',
+                            text: `Check out this ${recommendation.occasion || 'outfit'} on ClosetMate!`,
+                            url: 'https://closetmate-app.vercel.app',
+                            dialogTitle: 'Share Recommendation',
+                        });
+                    } catch (err) {
+                        console.error('Error sharing:', err);
+                        navigator.clipboard.writeText('https://closetmate-app.vercel.app');
+                        alert('Link copied to clipboard!');
                     }
                 }}>
-                    <Share2 size={14} /> Share
+                    <Share2 size={14} /> System Share
                 </button>
             </div>
         </div>

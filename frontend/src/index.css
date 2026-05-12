@@ -56,6 +56,8 @@ body {
   overflow-x: hidden;
   background-image: var(--bg-gradient);
   transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 
