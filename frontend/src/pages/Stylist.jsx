@@ -282,12 +282,12 @@ const RecommendationCard = ({ recommendation, token }) => {
                         await Share.share({
                             title: 'ClosetMate Look',
                             text: `Check out this ${recommendation.occasion || 'outfit'} on ClosetMate!`,
-                            url: 'https://closetmate-app.vercel.app',
+                            url: 'https://closet-mate.vercel.app',
                             dialogTitle: 'Share Recommendation',
                         });
                     } catch (err) {
                         console.error('Error sharing:', err);
-                        navigator.clipboard.writeText('https://closetmate-app.vercel.app');
+                        navigator.clipboard.writeText('https://closet-mate.vercel.app');
                         alert('Link copied to clipboard!');
                     }
                 }}>

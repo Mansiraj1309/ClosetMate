@@ -95,12 +95,12 @@ const Community = () => {
             await Share.share({
                 title: 'ClosetMate Style',
                 text: `Check out this ${post.occasion} outfit on ClosetMate!`,
-                url: 'https://closetmate-app.vercel.app',
+                url: 'https://closet-mate.vercel.app',
                 dialogTitle: 'Share this look',
             });
         } catch (err) {
             console.error('Error sharing:', err);
-            navigator.clipboard.writeText('https://closetmate-app.vercel.app');
+            navigator.clipboard.writeText('https://closet-mate.vercel.app');
             alert('Link copied to clipboard!');
         }
     };
