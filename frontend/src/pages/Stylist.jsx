@@ -280,16 +280,25 @@ const RecommendationCard = ({ recommendation, token }) => {
                     {shareSuccess ? <><CheckCircle size={14} /> Shared</> : <><Zap size={14} /> Share to Community</>}
                 </button>
                 <button className="rec-action-btn secondary" onClick={async () => {
+                    const shareData = {
+                        title: 'ClosetMate Look',
+                        text: `Check out this ${recommendation.occasion || 'outfit'} on ClosetMate!`,
+                        url: 'https://closet-mate.vercel.app'
+                    };
+                    
                     try {
-                        await Share.share({
-                            title: 'ClosetMate Look',
-                            text: `Check out this ${recommendation.occasion || 'outfit'} on ClosetMate!`,
-                            url: 'https://closet-mate.vercel.app',
-                            dialogTitle: 'Share Recommendation',
-                        });
+                        if (navigator.share) {
+                            await navigator.share(shareData);
+                        } else {
+                            // Capacitor fallback
+                            await Share.share({
+                                ...shareData,
+                                dialogTitle: 'Share Recommendation',
+                            });
+                        }
                     } catch (err) {
                         console.error('Error sharing:', err);
-                        navigator.clipboard.writeText('https://closet-mate.vercel.app');
+                        navigator.clipboard.writeText(shareData.url);
                         alert('Link copied to clipboard!');
                     }
                 }}>
