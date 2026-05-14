@@ -32,8 +32,14 @@ export const CLOTHING_CATEGORIES = {
         Bottoms: [
             'Jeans', 'Palazzo', 'Leggings', 'Skirt', 'Sharara', 'Salwar', 'Jeggings', 'Shorts'
         ],
+        Dresses: [
+            'Maxi Dress', 'Mini Dress', 'Bodycon', 'A-Line', 'Shift Dress', 'Evening Gown', 'Cocktail Dress', 'Midi Dress'
+        ],
         'Ethnic Wear': [
             'Saree', 'Salwar Suit', 'Lehenga', 'Anarkali', 'Kurta Set', 'Dupatta', 'Blouse'
+        ],
+        'Loungewear': [
+            'Night Suit', 'Nighty', 'Pyjamas', 'Bathrobe', 'Sleep Shirt'
         ],
         Footwear: [
             'Heels', 'Flats', 'Sneakers', 'Sandals', 'Ethnic Footwear', 'Boots'
@@ -54,6 +60,7 @@ export const CLOTHING_CATEGORIES = {
     Unisex: {
         Tops: ['T-shirt', 'Hoodie', 'Sweatshirt', 'Shirt'],
         Bottoms: ['Jeans', 'Joggers', 'Cargo', 'Shorts'],
+        'Loungewear': ['Night Suit', 'Pyjamas', 'Tracksuit'],
         Footwear: ['Sneakers', 'Boots', 'Sandals'],
         Accessories: ['Watch', 'Cap', 'Sunglasses', 'Backpack'],
         Outerwear: ['Jacket', 'Coat', 'Denim Jacket'],
