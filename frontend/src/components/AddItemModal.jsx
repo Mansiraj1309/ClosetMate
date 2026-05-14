@@ -172,10 +172,9 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsRemovingBg(true);
         setBgError('');
         try {
-            // Run bg removal using locally installed package
-            // Returns a Blob with transparent background (PNG)
+            // Run bg removal using smaller model for mobile speed/stability
             const blob = await removeBackground(file, {
-                model: 'medium',
+                model: 'small', // Use small model for mobile reliability
             });
 
             // Composite onto a clean off-white canvas
@@ -344,7 +343,8 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                     onClose();
                     // State will be reset by the useEffect when modal closes/opens
                 } else {
-                    alert('Failed to add item. Check server logs.');
+                    const errorData = await res.json();
+                    alert(`Failed to add item: ${errorData.message || res.statusText}. Check server logs.`);
                 }
             }
         } catch (err) {

@@ -26,16 +26,21 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const res = await fetch(`${API_BASE}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-        localStorage.setItem('closetmate_token', data.token);
-        setToken(data.token);
-        setUser(data.user);
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            localStorage.setItem('closetmate_token', data.token);
+            setToken(data.token);
+            setUser(data.user);
+        } catch (err) {
+            alert(`Login Error: ${err.message}. API URL: ${API_BASE}`);
+            throw err;
+        }
     };
 
     const register = async (name, email, password) => {
