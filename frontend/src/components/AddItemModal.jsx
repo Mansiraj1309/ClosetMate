@@ -520,7 +520,15 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                     )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="add-item-form-progressive">
+                <form 
+                    onSubmit={handleSubmit} 
+                    className="add-item-form-progressive"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                            e.preventDefault();
+                        }
+                    }}
+                >
                     {renderStep()}
                 </form>
             </div>

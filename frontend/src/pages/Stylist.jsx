@@ -106,6 +106,8 @@ const Stylist = () => {
                 recommendation: data
             });
         } catch (err) {
+            console.error('Stylist Error:', err);
+            alert(`AI Stylist Error: ${err.message}`);
             addMessage({ type: 'ai', text: "Sorry, I ran into an error. Please try again!", isError: true });
             setError(err.message);
         } finally {
@@ -275,7 +277,7 @@ const RecommendationCard = ({ recommendation, token }) => {
                     {logSuccess ? <><CheckCircle size={14} /> Logged</> : <><CalendarCheck size={14} /> Log Outfit</>}
                 </button>
                 <button className={`rec-action-btn ${shareSuccess ? 'success' : ''}`} onClick={handleShareToCommunity} disabled={shareLoading}>
-                    {shareSuccess ? <><CheckCircle size={14} /> Shared</> : <><Compass size={14} /> Share to Community</>}
+                    {shareSuccess ? <><CheckCircle size={14} /> Shared</> : <><Zap size={14} /> Share to Community</>}
                 </button>
                 <button className="rec-action-btn secondary" onClick={async () => {
                     try {
