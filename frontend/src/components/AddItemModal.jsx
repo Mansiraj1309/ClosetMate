@@ -266,7 +266,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
 
         // For new items, image is required
         if (!isEditMode && !uploadFile) { alert("Please upload an image first!"); return; }
@@ -484,12 +484,54 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                             </select>
                         </div>
                         <div className="form-group">
+                            <label>Purchase Date</label>
+                            <input 
+                                type="date" 
+                                name="purchaseDate" 
+                                value={formData.purchaseDate} 
+                                onChange={handleChange} 
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Occasions</label>
+                            <div className="occasion-chips">
+                                {OCCASIONS.map(occ => (
+                                    <button
+                                        key={occ}
+                                        type="button"
+                                        className={`occasion-chip ${formData.occasions.includes(occ) ? 'selected' : ''}`}
+                                        onClick={() => toggleOccasion(occ)}
+                                    >
+                                        {occ}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label>Style Notes</label>
+                            <textarea 
+                                name="styleNotes" 
+                                value={formData.styleNotes} 
+                                onChange={handleChange} 
+                                placeholder="e.g. Pairs well with silver jewelry"
+                                rows="3"
+                                className="style-notes-area"
+                            />
+                        </div>
+                        <div className="form-group">
                             <label>Purchase Price (₹)</label>
-                            <input type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} placeholder="e.g. 1999" />
+                            <input 
+                                type="text" 
+                                inputMode="numeric"
+                                name="purchasePrice" 
+                                value={formData.purchasePrice} 
+                                onChange={handleChange} 
+                                placeholder="e.g. 1999" 
+                            />
                         </div>
                         <div className="btn-group">
                             <button type="button" className="cta-button secondary-btn" onClick={prevStep}>Back</button>
-                            <button type="submit" className="cta-button" disabled={isSubmitting}>
+                            <button type="button" className="cta-button" onClick={handleSubmit} disabled={isSubmitting}>
                                 {isSubmitting ? 'Saving...' : 'Finish & Save'}
                             </button>
                         </div>
