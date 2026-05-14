@@ -304,57 +304,6 @@
 
 
 
-/* ── Occasion chips for step 3 */
-.occasion-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.occasion-chip {
-  padding: 0.4rem 0.9rem;
-  border-radius: 2rem;
-  border: 1px solid var(--card-border);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.occasion-chip.selected {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(129, 140, 248, 0.3);
-}
-
-.occasion-chip:hover:not(.selected) {
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-}
-
-.style-notes-area {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--border-radius-sm);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.95rem;
-  resize: vertical;
-  transition: all 0.2s;
-}
-
-.style-notes-area:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.1);
-}
-
 /* ── Occasion chip grid ──────────────────── */
 
 .chip-grid {
@@ -503,4 +452,35 @@
     flex-direction: column;
     gap: 1.25rem;
   }
+}
+
+/* Occasion chips for step 3 */
+.occasion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.occasion-chip {
+  padding: 0.4rem 0.9rem;
+  border-radius: 2rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.occasion-chip.selected {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.occasion-chip:hover:not(.selected) {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
 }

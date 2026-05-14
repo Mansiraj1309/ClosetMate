@@ -83,6 +83,11 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 name: initialData.name || '',
                 style: initialData.style || '',
                 season: initialData.season || 'All Season',
+                category: initialData.category || 'Tops',
+                type: initialData.type || '',
+                gender: initialData.gender || 'Unisex',
+                color: COLORS.includes(initialData.color) ? initialData.color : (initialData.color ? '__custom' : 'Black'),
+                customColor: COLORS.includes(initialData.color) ? '' : (initialData.color || ''),
             });
             setStep(2); // Jump to review step if pre-filled
         } else {
@@ -409,6 +414,17 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 return (
                     <div className="step-container fadeIn">
                         <p className="step-desc">AI has auto-filled these details. Quick check?</p>
+                        <div className="form-group">
+                            <label>Item Name <span style={{color:'var(--text-secondary)',fontWeight:400}}>(optional nickname)</span></label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. My favourite hoodie"
+                                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                            />
+                        </div>
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Gender</label>
@@ -484,15 +500,6 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                             </select>
                         </div>
                         <div className="form-group">
-                            <label>Purchase Date</label>
-                            <input 
-                                type="date" 
-                                name="purchaseDate" 
-                                value={formData.purchaseDate} 
-                                onChange={handleChange} 
-                            />
-                        </div>
-                        <div className="form-group">
                             <label>Occasions</label>
                             <div className="occasion-chips">
                                 {OCCASIONS.map(occ => (
@@ -507,31 +514,45 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                                 ))}
                             </div>
                         </div>
-                        <div className="form-group">
-                            <label>Style Notes</label>
-                            <textarea 
-                                name="styleNotes" 
-                                value={formData.styleNotes} 
-                                onChange={handleChange} 
-                                placeholder="e.g. Pairs well with silver jewelry"
-                                rows="3"
-                                className="style-notes-area"
-                            />
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Purchase Price (₹)</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    name="purchasePrice"
+                                    value={formData.purchasePrice}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 1999"
+                                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Purchase Date</label>
+                                <input
+                                    type="date"
+                                    name="purchaseDate"
+                                    value={formData.purchaseDate}
+                                    onChange={handleChange}
+                                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                                />
+                            </div>
                         </div>
                         <div className="form-group">
-                            <label>Purchase Price (₹)</label>
-                            <input 
-                                type="text" 
-                                inputMode="numeric"
-                                name="purchasePrice" 
-                                value={formData.purchasePrice} 
-                                onChange={handleChange} 
-                                placeholder="e.g. 1999" 
+                            <label>Style Notes <span style={{color:'var(--text-secondary)',fontWeight:400}}>(optional)</span></label>
+                            <input
+                                type="text"
+                                name="styleNotes"
+                                value={formData.styleNotes}
+                                onChange={handleChange}
+                                placeholder="e.g. Pairs great with white sneakers"
+                                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                             />
                         </div>
                         <div className="btn-group">
                             <button type="button" className="cta-button secondary-btn" onClick={prevStep}>Back</button>
-                            <button type="button" className="cta-button" onClick={handleSubmit} disabled={isSubmitting}>
+                            <button type="button" className="cta-button" disabled={isSubmitting} onClick={handleSubmit}>
                                 {isSubmitting ? 'Saving...' : 'Finish & Save'}
                             </button>
                         </div>
@@ -563,12 +584,10 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 </div>
 
                 <form 
-                    onSubmit={handleSubmit} 
+                    onSubmit={(e) => e.preventDefault()}
                     className="add-item-form-progressive"
                     onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-                            e.preventDefault();
-                        }
+                        if (e.key === 'Enter') e.preventDefault();
                     }}
                 >
                     {renderStep()}

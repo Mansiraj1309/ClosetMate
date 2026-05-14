@@ -3,8 +3,12 @@ import { Plus, Camera, Shirt, ScanLine, X } from 'lucide-react';
 import './FloatingAddButton.css';
 import AddItemModal from './AddItemModal';
 import ScanTagModal from './ScanTagModal';
+import { useAuth } from '../context/AuthContext';
 
-const FloatingAddButton = () => {
+const FloatingAddButton = ({ onAdd }) => {
+    // ✅ FIXED: get token from auth context to pass to ScanTagModal
+    const { token } = useAuth();
+
     const [isOpen, setIsOpen] = useState(false);
     const [showAddItem, setShowAddItem] = useState(false);
     const [showScanTag, setShowScanTag] = useState(false);
@@ -15,7 +19,6 @@ const FloatingAddButton = () => {
 
     const handleQuickLog = () => {
         setIsOpen(false);
-        // Directly trigger the camera
         if (quickCamRef.current) {
             quickCamRef.current.click();
         }
@@ -24,11 +27,11 @@ const FloatingAddButton = () => {
     const handleQuickFile = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Open Add Item modal pre-loaded with the captured photo
             setShowAddItem(true);
         }
     };
 
+    // ✅ FIXED: onScanned receives full scanned data and passes to AddItemModal
     const handleScanned = (data) => {
         setScannedData(data);
         setShowScanTag(false);
@@ -73,17 +76,20 @@ const FloatingAddButton = () => {
             </div>
 
             {showAddItem && (
-                <AddItemModal 
-                    isOpen={showAddItem} 
-                    onClose={handleCloseAddItem} 
+                <AddItemModal
+                    isOpen={showAddItem}
+                    onClose={handleCloseAddItem}
+                    onAdd={onAdd}       // ✅ FIXED: pass onAdd so new items appear immediately
+                    token={token}       // ✅ FIXED: pass token
                     initialData={scannedData}
                 />
             )}
             {showScanTag && (
-                <ScanTagModal 
-                    isOpen={showScanTag} 
-                    onClose={() => setShowScanTag(false)} 
+                <ScanTagModal
+                    isOpen={showScanTag}
+                    onClose={() => setShowScanTag(false)}
                     onScanned={handleScanned}
+                    token={token}       // ✅ FIXED: pass token to ScanTagModal
                 />
             )}
         </>

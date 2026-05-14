@@ -5,11 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import AddItemModal from '../components/AddItemModal';
 import './Wardrobe.css';
 
-const CATEGORY_OPTIONS = ['', 'Tops', 'Bottoms', 'Dresses / Suits', 'Outerwear', 'Shoes', 'Accessories', 'Activewear', 'Ethnic'];
+// ✅ FIXED: these must EXACTLY match what's saved in MongoDB (from constants.js categories)
+const CATEGORY_OPTIONS = ['', 'Tops', 'Bottoms', 'Dresses', 'Ethnic Wear', 'Loungewear', 'Footwear', 'Accessories', 'Jewelry', 'Outerwear', 'Activewear'];
 const SEASON_OPTIONS = ['', 'All Season', 'Summer', 'Winter', 'Rainy'];
-const FORMALITY_OPTIONS = ['', 'Casual', 'Smart Casual', 'Formal', 'Party', 'Ethnic'];
-const STYLE_OPTIONS = ['', 'Minimal', 'Streetwear', 'Sporty', 'Elegant', 'Vintage', 'Classic', 'Boho', 'Formal', 'Casual'];
-const GENDER_OPTIONS = ['', 'Menswear', 'Womenswear', 'Unisex'];
+const FORMALITY_OPTIONS = ['', 'Casual', 'Semi-Formal', 'Formal', 'Party', 'Ethnic', 'Sporty'];
+const STYLE_OPTIONS = ['', 'Minimal', 'Streetwear', 'Classic', 'Bohemian', 'Gothic', 'Sporty', 'Vintage', 'Chic'];
+// ✅ FIXED: gender values must match what's saved ('Men', 'Women', 'Unisex') — not 'Menswear'
+const GENDER_OPTIONS = ['', 'Men', 'Women', 'Unisex'];
 
 const Wardrobe = () => {
     const { token } = useAuth();
@@ -19,7 +21,6 @@ const Wardrobe = () => {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
 
-    // Filters + search
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({
         category: '', season: '', formality: '', style: '', gender: '',
@@ -44,7 +45,7 @@ const Wardrobe = () => {
                 setItems(data);
             }
         } catch (err) {
-            console.error("Failed to fetch wardrobe:", err);
+            console.error('Failed to fetch wardrobe:', err);
         } finally {
             setLoading(false);
         }
@@ -71,7 +72,7 @@ const Wardrobe = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this item?")) return;
+        if (!window.confirm('Are you sure you want to delete this item?')) return;
         try {
             const res = await fetch(`${API_BASE}/api/wardrobe/${id}`, {
                 method: 'DELETE',
@@ -79,7 +80,7 @@ const Wardrobe = () => {
             });
             if (res.ok) setItems(prev => prev.filter(item => item._id !== id));
         } catch (err) {
-            console.error("Failed to delete item:", err);
+            console.error('Failed to delete item:', err);
         }
     };
 
@@ -94,7 +95,7 @@ const Wardrobe = () => {
                 setItems(prev => prev.map(i => i._id === id ? updated : i));
             }
         } catch (err) {
-            console.error("Failed to mark worn:", err);
+            console.error('Failed to mark worn:', err);
         }
     };
 
@@ -162,8 +163,9 @@ const Wardrobe = () => {
                             <option value="">All Styles</option>
                             {STYLE_OPTIONS.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
+                        {/* ✅ FIXED: gender values now match DB ('Men' not 'Menswear') */}
                         <select name="gender" value={filters.gender} onChange={handleFilterChange}>
-                            <option value="">All Gender</option>
+                            <option value="">All Genders</option>
                             {GENDER_OPTIONS.filter(Boolean).map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </div>
@@ -191,7 +193,7 @@ const Wardrobe = () => {
                         <Sparkles size={30} className="sparkle-icon" />
                     </div>
                     <h3>{hasActiveFilters ? 'No items match your filters.' : 'Your fashion journey starts here ✨'}</h3>
-                    <p>{hasActiveFilters ? 'Try adjusting or clearing filters to find what you need.' : 'ClosetMate is more fun when you have your clothes logged. Let\'s add your first item!'}</p>
+                    <p>{hasActiveFilters ? 'Try adjusting or clearing filters to find what you need.' : "ClosetMate is more fun when you have your clothes logged. Let's add your first item!"}</p>
                     {!hasActiveFilters && (
                         <button className="cta-button" onClick={() => setIsModalOpen(true)}>
                             <Plus size={20} /> Add Your First Item
@@ -221,7 +223,8 @@ const Wardrobe = () => {
                             </div>
                             <div className="item-details">
                                 <div className="item-main-info">
-                                    <h4>{item.name || `${item.color} ${item.category}`}</h4>
+                                    {/* ✅ FIXED: show item name prominently, fall back to color+category */}
+                                    <h4>{item.name || `${item.color} ${item.type || item.category}`}</h4>
                                     {item.brand && <span className="brand-label">{item.brand}</span>}
                                 </div>
                                 <div className="type-size-row">
@@ -231,9 +234,12 @@ const Wardrobe = () => {
                                 <div className="item-tags">
                                     <span className="tag">{item.formality}</span>
                                     {item.style && <span className="tag">{item.style}</span>}
-                                    {item.occasions?.map(o => <span key={o} className="tag tag-occasion">{o}</span>)}
+                                    {item.occasions?.slice(0, 2).map(o => <span key={o} className="tag tag-occasion">{o}</span>)}
                                 </div>
                                 {item.styleNotes && <p className="item-notes">"{item.styleNotes}"</p>}
+                                {item.purchasePrice && (
+                                    <p className="item-price">₹{item.purchasePrice.toLocaleString('en-IN')}</p>
+                                )}
                                 <div className="item-footer">
                                     <span className="wear-count">Worn {item.wearCount || 0}×</span>
                                     <button className="wear-btn" onClick={() => handleWear(item._id)} title="Mark as worn today">
