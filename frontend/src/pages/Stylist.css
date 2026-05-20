@@ -10,7 +10,7 @@
 
 /* ── Mobile: prevent FAB (+) from covering send button ── */
 @media (max-width: 768px) {
-    .chat-input-area {
+    .chat-input-container {
         padding-right: 76px !important; /* push send btn away from FAB */
         margin-right: 0 !important;
     }
