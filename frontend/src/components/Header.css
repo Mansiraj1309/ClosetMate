@@ -76,9 +76,18 @@
     border: 2px solid var(--accent-primary);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .app-header {
-        top: 10px;
-        margin: 0 10px;
+        top: 0;
+        /* Break out of .app-container 1rem padding */
+        margin: -1rem -1rem 1rem -1rem !important;
+        width: 100vw;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }
