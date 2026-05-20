@@ -102,17 +102,12 @@ const Community = () => {
                 url: shareUrl
             };
 
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback to Capacitor share
-                await Share.share({
-                    title: 'ClosetMate Style',
-                    text: shareText,
-                    url: shareUrl,
-                    dialogTitle: 'Share this look',
-                });
-            }
+            await Share.share({
+                title: 'ClosetMate Style',
+                text: shareText,
+                url: shareUrl,
+                dialogTitle: 'Share this look',
+            });
         } catch (err) {
             console.error('Error sharing:', err);
             if (err.name !== 'AbortError') {

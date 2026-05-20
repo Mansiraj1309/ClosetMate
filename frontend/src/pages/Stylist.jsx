@@ -4,9 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { Sparkles, Loader, ShoppingBag, Zap, CalendarCheck, CheckCircle, CloudSun, Share2, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWeather } from '../context/WeatherContext';
+import { Share } from '@capacitor/share';
 import './Stylist.css';
-
-// ✅ REMOVED: import { Share } from '@capacitor/share'; — crashes on web
 
 const QUICK_PROMPTS = [
     { emoji: '✨', label: 'Surprise me with a vibe' },
@@ -308,19 +307,14 @@ const RecommendationCard = ({ recommendation, token }) => {
         const shareUrl = 'https://closet-mate.vercel.app';
         
         try {
-            const shareData = {
+            await Share.share({
                 title: 'ClosetMate Look',
                 text: shareText,
                 url: shareUrl,
-            };
-
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(shareUrl);
-                alert('Link copied to clipboard!');
-            }
+                dialogTitle: 'Share this look',
+            });
         } catch (err) {
+            console.error('Error sharing:', err);
             if (err.name !== 'AbortError') {
                 navigator.clipboard.writeText(shareUrl);
                 alert('Link copied to clipboard!');

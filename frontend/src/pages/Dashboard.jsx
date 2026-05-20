@@ -164,7 +164,7 @@ const Dashboard = () => {
 
             {/* 2. Personality & Stats Row */}
             <section className="dashboard-secondary-row">
-                <div className="personality-card glass-card" onClick={() => navigate('/stats')}>
+                <div className="personality-card glass-card" onClick={() => navigate('/analytics')}>
                     <div className="p-icon-wrap">
                         <Heart className="p-icon" fill="currentColor" />
                     </div>
