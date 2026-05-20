@@ -3,9 +3,10 @@ const router = express.Router();
 const { upload } = require('../config/cloudinary');
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // All wardrobe routes are now protected — user must be logged in
 
@@ -189,7 +190,7 @@ router.post('/analyze-image', auth, async (req, res) => {
 Return ONLY a raw JSON object with EXACTLY these fields:
 {
   "gender": "Men", "Women" or "Unisex",
-  "category": One of ["Tops", "Bottoms", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
+  "category": One of ["Tops", "Bottoms", "Dresses", "Loungewear", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
   "type": Specific type from the category (e.g., "Oversized T-shirt", "Palazzo", "Saree", "Heels", "Kurta Pajama"),
   "color": Primary color name (e.g., "Navy Blue", "Emerald Green", "Burgundy"),
   "season": One of ["Summer", "Winter", "Rainy", "All Season"],
@@ -201,19 +202,30 @@ Return ONLY a raw JSON object with EXACTLY these fields:
 
 Be specific and accurate. If it's a specific Indian ethnic wear, identify it correctly (e.g., "Sherwani", "Anarkali").`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                {
-                    parts: [
-                        { text: prompt },
-                        { inlineData: { mimeType, data: imageBase64 } }
-                    ]
-                }
-            ],
-        });
+        let result;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        let aiText = response.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        while (attempts < maxAttempts) {
+            try {
+                result = await model.generateContent([
+                    { text: prompt },
+                    { inlineData: { mimeType, data: imageBase64 } }
+                ]);
+                break;
+            } catch (err) {
+                if (err.status === 429 && attempts < maxAttempts - 1) {
+                    attempts++;
+                    console.log(`Auto-tag Rate limited. Retry ${attempts}...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                } else {
+                    throw err;
+                }
+            }
+        }
+
+        const response = await result.response;
+        let aiText = response.text().replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const tags = JSON.parse(aiText);
         res.json(tags);
     } catch (err) {
@@ -237,7 +249,7 @@ Return ONLY a raw JSON object with these fields (use null if not found):
 {
   "brand": "Brand name (e.g. AZORTE, ZARA)",
   "name": "Full product name as on tag",
-  "category": "One of [Tops, Bottoms, Ethnic Wear, Footwear, Accessories, Jewelry, Outerwear, Activewear]",
+  "category": "One of [Tops, Bottoms, Dresses, Loungewear, Ethnic Wear, Footwear, Accessories, Jewelry, Outerwear, Activewear]",
   "type": "Specific item type (e.g. Saree, Kurta, T-shirt, Heels)",
   "size": "Size as on tag (e.g. L, 42, 32)",
   "color": "Color name as on tag or visible",
@@ -254,19 +266,30 @@ Return ONLY a raw JSON object with these fields (use null if not found):
 
 If you see multiple prices, use the current sale price or MRP. Be highly accurate with the brand and price.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [
-                {
-                    parts: [
-                        { text: prompt },
-                        { inlineData: { mimeType, data: imageBase64 } }
-                    ]
-                }
-            ],
-        });
+        let result;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        let aiText = response.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        while (attempts < maxAttempts) {
+            try {
+                result = await model.generateContent([
+                    { text: prompt },
+                    { inlineData: { mimeType, data: imageBase64 } }
+                ]);
+                break;
+            } catch (err) {
+                if (err.status === 429 && attempts < maxAttempts - 1) {
+                    attempts++;
+                    console.log(`Tag analyze Rate limited. Retry ${attempts}...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                } else {
+                    throw err;
+                }
+            }
+        }
+
+        const response = await result.response;
+        let aiText = response.text().replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const tagData = JSON.parse(aiText);
         res.json(tagData);
     } catch (err) {

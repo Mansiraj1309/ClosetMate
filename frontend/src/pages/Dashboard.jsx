@@ -52,23 +52,68 @@ const Dashboard = () => {
         }
     }, [token]);
 
-    // Personality Calculation (Simulated)
+    // Dynamic recommendation based on weather + wardrobe
+    const dynamicRec = useMemo(() => {
+        const hour = new Date().getHours();
+        const temp = weather?.main?.temp ? Math.round(weather.main.temp) : null;
+        const weatherMain = weather?.weather?.[0]?.main || '';
+        const weatherDesc = weather?.weather?.[0]?.description || 'clear skies';
+        const city = weather?.name || 'your city';
+
+        // Pick occasion label based on time of day
+        let timeLabel = 'Daily Look';
+        let occasionPrompt = 'casual daily outfit';
+        if (hour < 10) { timeLabel = 'Morning Look'; occasionPrompt = 'fresh morning casual outfit'; }
+        else if (hour < 13) { timeLabel = 'Mid-Day Outfit'; occasionPrompt = 'comfortable mid-day outfit'; }
+        else if (hour < 17) { timeLabel = 'Afternoon Vibe'; occasionPrompt = 'relaxed afternoon casual outfit'; }
+        else if (hour < 20) { timeLabel = 'Evening Look'; occasionPrompt = 'smart casual evening outfit'; }
+        else { timeLabel = 'Night Out Look'; occasionPrompt = 'stylish night out outfit'; }
+
+        // Pick style hint based on weather
+        let styleHint = '';
+        let matchScore = 91;
+        if (temp !== null && temp >= 32) { styleHint = 'Light fabrics are key in this heat.'; matchScore = 96; }
+        else if (temp !== null && temp >= 26) { styleHint = 'Perfect weather for breathable fits.'; matchScore = 93; }
+        else if (temp !== null && temp >= 20) { styleHint = 'A light layer would work great today.'; matchScore = 90; }
+        else if (temp !== null && temp < 20) { styleHint = 'Layer up — it\'s a bit cool today.'; matchScore = 88; }
+        if (weatherMain === 'Rain' || weatherMain === 'Drizzle') { styleHint = 'Avoid white — rain is expected!'; matchScore = 85; }
+        if (weatherMain === 'Clear') { matchScore += 3; }
+
+        // Use least-worn item as personalized suggestion
+        const leastWornItem = stats.leastWorn?.[0];
+        const mostWornItem = stats.mostWorn?.[0];
+
+        let reasoning = '';
+        if (leastWornItem && mostWornItem) {
+            reasoning = <>It's {weatherDesc} in <strong>{city}</strong>. Try pairing your <strong>{leastWornItem.name}</strong> today — it's been sitting unused! Great chance to give it some love.</>;
+        } else if (leastWornItem) {
+            reasoning = <>It's {weatherDesc} in <strong>{city}</strong>. Your <strong>{leastWornItem.name}</strong> hasn't been worn recently — today's a great day to try it!</>;
+        } else if (temp !== null) {
+            reasoning = <>With {temp}°C and {weatherDesc} in <strong>{city}</strong>, {styleHint} Let the AI build you the perfect outfit from your closet.</>;
+        } else {
+            reasoning = <>Ask the AI Stylist to build you a complete outfit recommendation tailored to today's occasion and weather.</>;
+        }
+
+        const fullOccasionLink = `/stylist?occasion=${encodeURIComponent(`${occasionPrompt} for ${temp ? temp + '°C' : 'current weather'} ${weatherDesc} in ${city}`)}`;
+
+        return { timeLabel, occasionPrompt, matchScore, styleHint, reasoning, fullOccasionLink, temp, weatherDesc, city };
+    }, [weather, stats]);
+
+    // Personality Calculation
     const stylePersonality = useMemo(() => {
         if (stats.totalItems === 0) return "Fresh Starter";
         const topCat = Object.entries(stats.categoryBreakdown).sort((a,b) => b[1]-a[1])[0]?.[0];
         if (topCat === 'Ethnic Wear') return "Ethnic Royal";
         if (topCat === 'Activewear') return "Sporty Casual";
         if (topCat === 'Accessories') return "Detail Oriented";
-        
         const avgWears = stats.totalItems > 0 ? (stats.mostWorn.reduce((s,i) => s + i.wearCount, 0) / Math.max(stats.mostWorn.length, 1)) : 0;
         if (avgWears > 5) return "Minimalist Chic";
-        
         return "Versatile Stylist";
     }, [stats]);
 
     return (
         <main className="dashboard-page" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(20px + env(safe-area-inset-bottom))' }}>
-            {/* 1. New Hero: Today's Recommendation */}
+            {/* 1. Hero: Dynamic Today's Recommendation */}
             <section className="recommendation-hero">
                 <div className="hero-content">
                     <div className="hero-badge">
@@ -80,29 +125,24 @@ const Dashboard = () => {
                         <div className="rec-info">
                             <div className="rec-header">
                                 <div className="rec-title-group">
-                                    <h3>Perfect Casual Look</h3>
-                                    <p className="rec-meta">Based on {weather?.main ? `${Math.round(weather.main.temp)}°C ${weather.weather[0].main}` : 'local weather'}</p>
+                                    <h3>{dynamicRec.timeLabel}</h3>
+                                    <p className="rec-meta">
+                                        Based on {dynamicRec.temp ? `${dynamicRec.temp}°C ${dynamicRec.weatherDesc}` : 'local weather'} · {dynamicRec.city}
+                                    </p>
                                 </div>
                                 <div className="rec-confidence">
-                                    <Award size={16} /> <span>94% Match</span>
+                                    <Award size={16} /> <span>{dynamicRec.matchScore}% Match</span>
                                 </div>
                             </div>
                             
-                            <p className="rec-reasoning">
-                                Since it's {weather?.weather[0].description || 'clear'} today and you're in <strong>{weather?.name || 'your city'}</strong>, 
-                                your <strong>White T-shirt</strong> paired with <strong>Blue Jeans</strong> is the best move. 
-                                You haven't worn this combo in 5 days!
-                            </p>
+                            <p className="rec-reasoning">{dynamicRec.reasoning}</p>
 
                             <div className="rec-actions">
-                                <Link 
-                                    to={`/stylist?occasion=${encodeURIComponent(`Casual look for ${Math.round(weather?.main?.temp || 25)}°C ${weather?.weather[0]?.description || 'clear'} weather`)}`} 
-                                    className="cta-button"
-                                >
-                                    <Zap size={18} /> Wear This Today
+                                <Link to={dynamicRec.fullOccasionLink} className="cta-button">
+                                    <Zap size={18} /> Style Me Now
                                 </Link>
-                                <Link to="/stylist?occasion=surprise me with a new look" className="cta-button secondary-btn">
-                                    Regenerate
+                                <Link to="/stylist?occasion=surprise me with a completely new look" className="cta-button secondary-btn">
+                                    Surprise Me
                                 </Link>
                             </div>
                         </div>
