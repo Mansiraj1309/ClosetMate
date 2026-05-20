@@ -53,7 +53,6 @@ body {
   background-color: var(--bg-color);
   color: var(--text-primary);
   min-height: 100vh;
-  overflow-x: hidden;
   background-image: var(--bg-gradient);
   transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
   padding-top: env(safe-area-inset-top);
