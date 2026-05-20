@@ -198,69 +198,71 @@ const ScanTagModal = ({ isOpen, onClose, onScanned, token }) => {
                             </button>
                         </div>
                     )}
+                </div>
 
-                    {step === 'success' && scannedItem && (
-                        <div className="smart-preview-card animation-fade-in">
-                            <div className="preview-header">
-                                <div className="detected-badge">✨ Detected Automatically</div>
-                                <h3 className="brand-name">{scannedItem.brand || 'Unknown Brand'}</h3>
-                                <p className="item-name">{scannedItem.name || 'Clothing Item'}</p>
-                                {scannedItem.articleId && (
-                                    <p className="article-id">Article: {scannedItem.articleId}</p>
-                                )}
-                            </div>
-
-                            <div className="preview-grid">
-                                <div className="preview-item">
-                                    <span className="label">Price</span>
-                                    <span className="value">
-                                        {scannedItem.price
-                                            ? `${scannedItem.currency === 'USD' ? '$' : '₹'}${scannedItem.price}`
-                                            : '--'}
-                                    </span>
-                                </div>
-                                <div className="preview-item">
-                                    <span className="label">Size</span>
-                                    <span className="value">{scannedItem.size || '--'}</span>
-                                </div>
-                                <div className="preview-item">
-                                    <span className="label">Color</span>
-                                    <span className="value">{scannedItem.color || '--'}</span>
-                                </div>
-                                <div className="preview-item">
-                                    <span className="label">Category</span>
-                                    <span className="value">{scannedItem.category || '--'}</span>
-                                </div>
-                                <div className="preview-item">
-                                    <span className="label">Style</span>
-                                    <span className="value">{scannedItem.style || '--'}</span>
-                                </div>
-                                <div className="preview-item">
-                                    <span className="label">Season</span>
-                                    <span className="value">{scannedItem.season || '--'}</span>
-                                </div>
-                            </div>
-
-                            {scannedItem.fabric && (
-                                <p className="fabric-info">🧵 {scannedItem.fabric}</p>
+                {step === 'success' && scannedItem && (
+                    <div className="smart-preview-card animation-fade-in">
+                        <div className="preview-header">
+                            <div className="detected-badge">✨ Detected Automatically</div>
+                            <h3 className="brand-name">{scannedItem.brand || 'Unknown Brand'}</h3>
+                            <p className="item-name">{scannedItem.name || 'Clothing Item'}</p>
+                            {scannedItem.articleId && (
+                                <p className="article-id">Article: {scannedItem.articleId}</p>
                             )}
+                        </div>
 
-                            <div className="preview-actions">
-                                <button className="action-btn outline" onClick={handleRetry}>
-                                    <RefreshCw size={14} /> Scan Again
-                                </button>
+                        <div className="preview-grid">
+                            <div className="preview-item">
+                                <span className="label">Price</span>
+                                <span className="value">
+                                    {scannedItem.price
+                                        ? `${scannedItem.currency === 'USD' ? '$' : '₹'}${scannedItem.price}`
+                                        : '--'}
+                                </span>
                             </div>
+                            <div className="preview-item">
+                                <span className="label">Size</span>
+                                <span className="value">{scannedItem.size || '--'}</span>
+                            </div>
+                            <div className="preview-item">
+                                <span className="label">Color</span>
+                                <span className="value">{scannedItem.color || '--'}</span>
+                            </div>
+                            <div className="preview-item">
+                                <span className="label">Category</span>
+                                <span className="value">{scannedItem.category || '--'}</span>
+                            </div>
+                            <div className="preview-item">
+                                <span className="label">Style</span>
+                                <span className="value">{scannedItem.style || '--'}</span>
+                            </div>
+                            <div className="preview-item">
+                                <span className="label">Season</span>
+                                <span className="value">{scannedItem.season || '--'}</span>
+                            </div>
+                        </div>
 
-                            <button className="cta-button full-width" onClick={handleSaveToCloset}>
-                                ✅ Save to Closet
+                        {scannedItem.fabric && (
+                            <p className="fabric-info">🧵 {scannedItem.fabric}</p>
+                        )}
+
+                        <div className="preview-actions">
+                            <button className="action-btn outline" onClick={handleRetry}>
+                                <RefreshCw size={14} /> Scan Again
                             </button>
                         </div>
-                    )}
-                </div>
 
-                <div className="scan-footer">
-                    <p>Point camera at any garment tag to instantly digitize it.</p>
-                </div>
+                        <button className="cta-button full-width" onClick={handleSaveToCloset}>
+                            ✅ Save to Closet
+                        </button>
+                    </div>
+                )}
+
+                {step !== 'success' && (
+                    <div className="scan-footer">
+                        <p>Point camera at any garment tag to instantly digitize it.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
