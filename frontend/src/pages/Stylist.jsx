@@ -302,36 +302,17 @@ const RecommendationCard = ({ recommendation, token }) => {
         finally { setLogLoading(false); }
     };
 
-    // ✅ FIXED: Web Share API with native photo sharing support
+    // ✅ FIXED: Web Share API without async block to preserve user gesture
     const handleSystemShare = async () => {
         const shareText = `Check out this amazing outfit recommended by ClosetMate!`;
         const shareUrl = 'https://closet-mate.vercel.app';
         
         try {
-            let imageFile = null;
-            const firstItem = recommendation.outfit?.[0];
-
-            if (firstItem && firstItem.imageUrl) {
-                try {
-                    const response = await fetch(firstItem.imageUrl, { mode: 'cors' });
-                    const blob = await response.blob();
-                    const mimeType = blob.type || 'image/jpeg';
-                    const extension = mimeType.split('/')[1] || 'jpg';
-                    imageFile = new File([blob], `closetmate-outfit.${extension}`, { type: mimeType });
-                } catch (e) {
-                    console.log('Skipping image attachment:', e.message);
-                }
-            }
-
             const shareData = {
                 title: 'ClosetMate Look',
                 text: shareText,
                 url: shareUrl,
             };
-
-            if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-                shareData.files = [imageFile];
-            }
 
             if (navigator.share) {
                 await navigator.share(shareData);

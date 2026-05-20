@@ -8,6 +8,14 @@
     padding-bottom: 20px;
 }
 
+/* ── Mobile: prevent FAB (+) from covering send button ── */
+@media (max-width: 768px) {
+    .chat-input-area {
+        padding-right: 76px !important; /* push send btn away from FAB */
+        margin-right: 0 !important;
+    }
+}
+
 /* ── Chat Header ── */
 .chat-header {
     display: flex;

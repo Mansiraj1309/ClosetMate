@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import API_BASE from '../api';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
     Sparkles, Shirt, Calendar, ShoppingBag, PartyPopper, 
     TrendingUp, AlertCircle, CloudSun, Loader, 
@@ -34,6 +34,7 @@ const weatherToEmoji = (main) => {
 
 const Dashboard = () => {
     const { user, token } = useAuth();
+    const navigate = useNavigate();
     const { weather, loading: weatherLoading } = useWeather();
     const [stats, setStats] = useState({
         totalItems: 0, totalCategories: 0, categoryBreakdown: {},
@@ -163,7 +164,7 @@ const Dashboard = () => {
 
             {/* 2. Personality & Stats Row */}
             <section className="dashboard-secondary-row">
-                <div className="personality-card glass-card">
+                <div className="personality-card glass-card" onClick={() => navigate('/stats')}>
                     <div className="p-icon-wrap">
                         <Heart className="p-icon" fill="currentColor" />
                     </div>
