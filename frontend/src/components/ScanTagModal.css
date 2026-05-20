@@ -56,7 +56,7 @@
 
 .camera-viewport {
     width: 100%;
-    aspect-ratio: 1;
+    aspect-ratio: 3/4;
     background: #000;
     border-radius: 20px;
     position: relative;
@@ -86,8 +86,8 @@
 }
 
 .scan-target-box {
-    width: 220px;
-    height: 220px;
+    width: 280px;
+    height: 350px;
     border: 2px solid var(--accent-primary);
     border-radius: 20px;
     box-shadow: 0 0 0 4000px rgba(0,0,0,0.4);
