@@ -91,17 +91,54 @@ const Community = () => {
     };
 
     const handleShare = async (post) => {
+        const shareText = `Check out this amazing "${post.occasion}" outfit generated on ClosetMate!`;
+        const shareUrl = 'https://closet-mate.vercel.app';
+        
         try {
-            await Share.share({
+            let imageFile = null;
+            const firstItem = post.items?.[0];
+
+            // Try to download the first clothing image to attach as a real file
+            if (firstItem && firstItem.imageUrl) {
+                try {
+                    const response = await fetch(firstItem.imageUrl, { mode: 'cors' });
+                    const blob = await response.blob();
+                    const mimeType = blob.type || 'image/jpeg';
+                    const extension = mimeType.split('/')[1] || 'jpg';
+                    imageFile = new File([blob], `closetmate-outfit.${extension}`, { type: mimeType });
+                } catch (e) {
+                    console.log('Skipping image attachment (using text-only share):', e.message);
+                }
+            }
+
+            const shareData = {
                 title: 'ClosetMate Style',
-                text: `Check out this ${post.occasion} outfit on ClosetMate!`,
-                url: 'https://closet-mate.vercel.app',
-                dialogTitle: 'Share this look',
-            });
+                text: shareText,
+                url: shareUrl
+            };
+
+            // Attach image file if supported by browser/device
+            if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                shareData.files = [imageFile];
+            }
+
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback to Capacitor share
+                await Share.share({
+                    title: 'ClosetMate Style',
+                    text: shareText,
+                    url: shareUrl,
+                    dialogTitle: 'Share this look',
+                });
+            }
         } catch (err) {
             console.error('Error sharing:', err);
-            navigator.clipboard.writeText('https://closet-mate.vercel.app');
-            alert('Link copied to clipboard!');
+            if (err.name !== 'AbortError') {
+                navigator.clipboard.writeText(shareUrl);
+                alert('Link copied to clipboard!');
+            }
         }
     };
 

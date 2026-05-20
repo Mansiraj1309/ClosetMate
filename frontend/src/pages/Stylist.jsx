@@ -302,23 +302,46 @@ const RecommendationCard = ({ recommendation, token }) => {
         finally { setLogLoading(false); }
     };
 
-    // ✅ FIXED: Web Share API instead of Capacitor
+    // ✅ FIXED: Web Share API with native photo sharing support
     const handleSystemShare = async () => {
-        const shareData = {
-            title: 'ClosetMate Look',
-            text: `Check out this outfit on ClosetMate!`,
-            url: 'https://closet-mate.vercel.app',
-        };
+        const shareText = `Check out this amazing outfit recommended by ClosetMate!`;
+        const shareUrl = 'https://closet-mate.vercel.app';
+        
         try {
+            let imageFile = null;
+            const firstItem = recommendation.outfit?.[0];
+
+            if (firstItem && firstItem.imageUrl) {
+                try {
+                    const response = await fetch(firstItem.imageUrl, { mode: 'cors' });
+                    const blob = await response.blob();
+                    const mimeType = blob.type || 'image/jpeg';
+                    const extension = mimeType.split('/')[1] || 'jpg';
+                    imageFile = new File([blob], `closetmate-outfit.${extension}`, { type: mimeType });
+                } catch (e) {
+                    console.log('Skipping image attachment:', e.message);
+                }
+            }
+
+            const shareData = {
+                title: 'ClosetMate Look',
+                text: shareText,
+                url: shareUrl,
+            };
+
+            if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                shareData.files = [imageFile];
+            }
+
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                await navigator.clipboard.writeText('https://closet-mate.vercel.app');
+                await navigator.clipboard.writeText(shareUrl);
                 alert('Link copied to clipboard!');
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                navigator.clipboard.writeText('https://closet-mate.vercel.app');
+                navigator.clipboard.writeText(shareUrl);
                 alert('Link copied to clipboard!');
             }
         }
