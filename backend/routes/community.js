@@ -106,3 +106,19 @@ router.post('/:id/comment', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// @route   DELETE /api/community/:id
+// @desc    Delete a post (only if owned by logged-in user)
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const post = await OutfitPost.findOne({ _id: req.params.id, userId: req.userId });
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found or unauthorized' });
+        }
+        await post.deleteOne();
+        res.json({ message: 'Post deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting post:', err);
+        res.status(500).json({ message: 'Server error deleting post' });
+    }
+});

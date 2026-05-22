@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Heart, MessageSquare, Compass, Share2, Award, Sparkles } from 'lucide-react';
+import { Compass, Heart, MessageSquare, Share2, Award, Sparkles, Trash2 } from 'lucide-react';
 import { Share } from '@capacitor/share';
 import './Community.css';
 
@@ -117,6 +117,24 @@ const Community = () => {
         }
     };
 
+    const handleDeletePost = async (postId) => {
+        if (!window.confirm('Are you sure you want to delete this post?')) return;
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/community/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setPosts(posts.filter(p => p._id !== postId));
+            } else {
+                alert('Failed to delete post');
+            }
+        } catch (err) {
+            console.error('Error deleting post:', err);
+        }
+    };
+
     if (loading) {
         return (
             <div className="community-page">
@@ -164,29 +182,7 @@ const Community = () => {
                 <p className="subtitle">Explore, vote, and get inspired by the ClosetMate family.</p>
             </header>
 
-            {/* Simulated Banners */}
-            <div className="community-highlights">
-                <div className="highlight-card challenge glass-card">
-                    <div className="h-content">
-                        <Award size={20} />
-                        <div>
-                            <h4>Style Challenge</h4>
-                            <p>#MonochromeMonday</p>
-                        </div>
-                    </div>
-                    <button className="join-btn">Join</button>
-                </div>
-                <div className="highlight-card battle glass-card">
-                    <div className="h-content">
-                        <Heart size={20} fill="currentColor" />
-                        <div>
-                            <h4>Outfit Battle</h4>
-                            <p>Streetwear vs Classic</p>
-                        </div>
-                    </div>
-                    <button className="vote-btn">Vote</button>
-                </div>
-            </div>
+            {/* Highlights removed to streamline the feed */}
 
             {posts.length === 0 ? (
                 <div className="community-empty">
@@ -259,6 +255,12 @@ const Community = () => {
                                     <button className="action-btn" onClick={() => handleShare(post)}>
                                         <Share2 size={20} className="action-icon" />
                                     </button>
+
+                                    {user && post.userId && post.userId._id === user.id && (
+                                        <button className="action-btn delete-btn" onClick={() => handleDeletePost(post._id)} style={{ marginLeft: 'auto', color: 'var(--accent)' }}>
+                                            <Trash2 size={20} className="action-icon" />
+                                        </button>
+                                    )}
                                 </div>
 
                                 {isCommentsOpen && (

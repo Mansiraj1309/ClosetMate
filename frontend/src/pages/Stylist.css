@@ -214,7 +214,8 @@
 
 .quick-suggestions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Changed to nowrap for horizontal scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling */
     gap: 0.5rem;
     margin-bottom: 0.75rem;
     padding: 0.2rem 0;
