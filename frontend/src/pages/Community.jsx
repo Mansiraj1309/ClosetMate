@@ -219,7 +219,7 @@ const Community = () => {
             ) : (
                 <div className="community-grid">
                     {posts.map(post => {
-                        const isLiked = user && post.likes.includes(user.id);
+                        const isLiked = user && post.likes.includes(user.id || user._id);
                         const isCommentsOpen = activeComments === post._id;
                         
                         return (
@@ -246,11 +246,20 @@ const Community = () => {
                                 </div>
 
                                 <div className="post-items-grid">
-                                    {post.items.map((item, idx) => (
-                                        <div key={item._id || idx} className="post-item">
-                                            <img src={item.imageUrl} alt={item.category} />
-                                        </div>
-                                    ))}
+                                    {post.items && post.items.length > 0 ? (
+                                        post.items.map((item, idx) => {
+                                            if (!item) return null; // Safe check if item was deleted from DB
+                                            return (
+                                                <div key={item._id || idx} className="post-item">
+                                                    <img src={item.imageUrl} alt={item.category || 'Outfit Item'} />
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <p className="no-items-note" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            No items attached to this look.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="post-actions">
@@ -278,7 +287,7 @@ const Community = () => {
                                         <Share2 size={20} className="action-icon" />
                                     </button>
 
-                                    {user && post.userId && post.userId._id === user.id && (
+                                    {user && post.userId && post.userId._id === (user.id || user._id) && (
                                         <button className="action-btn delete-btn" onClick={() => handleDeletePost(post._id)} style={{ marginLeft: 'auto', color: 'var(--accent)' }}>
                                             <Trash2 size={20} className="action-icon" />
                                         </button>
