@@ -140,7 +140,7 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: 'AI failed to respond. Please try again in a few seconds.' });
+        res.status(500).json({ message: 'AI model is currently busy or rate-limited (Free Tier). Please wait 30 seconds and try again.' });
     }
 });
 
@@ -241,8 +241,7 @@ Rules:
         });
 
     } catch (err) {
-        console.error('AI Packing List Error:', err);
-        res.status(500).json({ message: 'Failed to generate packing list. Check AI API Key or try again later.' });
+        res.status(500).json({ message: 'AI model is currently busy or rate-limited (Free Tier). Please wait 30 seconds and try again.' });
     }
 });
 

@@ -15,7 +15,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'closetmate_wardrobe',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        format: async (req, file) => 'jpg', // Auto-convert everything (like HEIC from iPhones) to JPG
     },
 });
 

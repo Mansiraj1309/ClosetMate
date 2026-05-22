@@ -206,7 +206,7 @@ const Stylist = () => {
                             ✨ {mood}
                         </button>
                     ))}
-                    <button onClick={() => handleSend('Pack for Goa 3 days beach trip')} className="suggestion-chip pack-chip">
+                    <button onClick={() => setInputValue('Pack for a trip to ')} className="suggestion-chip pack-chip">
                         ✈️ Pack for a trip
                     </button>
                 </div>
