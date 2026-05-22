@@ -182,7 +182,29 @@ const Community = () => {
                 <p className="subtitle">Explore, vote, and get inspired by the ClosetMate family.</p>
             </header>
 
-            {/* Highlights removed to streamline the feed */}
+            {/* Simulated Banners (Future Enhancements) */}
+            <div className="community-highlights">
+                <div className="highlight-card challenge glass-card">
+                    <div className="h-content">
+                        <Award size={20} />
+                        <div>
+                            <h4>Style Challenge</h4>
+                            <p>#MonochromeMonday</p>
+                        </div>
+                    </div>
+                    <button className="join-btn">Join</button>
+                </div>
+                <div className="highlight-card battle glass-card">
+                    <div className="h-content">
+                        <Heart size={20} fill="currentColor" />
+                        <div>
+                            <h4>Outfit Battle</h4>
+                            <p>Streetwear vs Classic</p>
+                        </div>
+                    </div>
+                    <button className="vote-btn">Vote</button>
+                </div>
+            </div>
 
             {posts.length === 0 ? (
                 <div className="community-empty">
