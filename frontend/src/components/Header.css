@@ -113,17 +113,30 @@
 
 @media (max-width: 768px) {
     .app-header {
+        position: fixed;
         top: 0;
-        margin: -1rem -1rem 1rem -1rem !important;
-        width: 100vw;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0 !important;
         border-radius: 0 !important;
         border-left: none !important;
         border-right: none !important;
         border-top: none !important;
-        padding-top: 0.6rem;
+        border-bottom: 1px solid var(--card-border) !important;
+        background: rgba(13, 15, 20, 0.85) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        padding-top: calc(0.6rem + env(safe-area-inset-top));
         padding-bottom: 0.6rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+        z-index: 1000;
+    }
+
+    .light-mode .app-header {
+        background: rgba(248, 250, 252, 0.85) !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
     }
 
     .header-right {

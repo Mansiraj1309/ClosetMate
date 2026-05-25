@@ -1,12 +1,12 @@
 .fab-container {
     position: fixed;
-    bottom: 105px;
+    bottom: calc(85px + env(safe-area-inset-bottom));
     right: 20px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 15px;
-    z-index: 999;
+    z-index: 1100; /* Higher than BottomNav (1000) so it floats perfectly on top */
     pointer-events: none; /* Let clicks pass through the invisible box to buttons beneath */
 }
 

@@ -342,27 +342,31 @@
     display: flex;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    width: 100%;
 }
 
 .budget-input {
     background: var(--card-bg);
-    border: 1px solid var(--border);
+    border: 1px solid var(--card-border);
     color: var(--text-primary);
-    padding: 0.5rem 0.75rem;
+    padding: 0.55rem 0.75rem;
     border-radius: 8px;
     font-size: 0.85rem;
-    width: 180px;
+    flex: 1;
+    min-width: 0;
 }
 
 .budget-btn {
     background: var(--accent-gradient);
     border: none;
     color: var(--text-primary);
-    padding: 0 1rem;
+    padding: 0.55rem 1.25rem;
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .budget-btn:disabled {

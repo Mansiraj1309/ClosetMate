@@ -419,7 +419,10 @@ body {
      ========================================= */
 @media (max-width: 768px) {
   .app-container {
-    padding: 1rem;
+    padding-top: calc(75px + env(safe-area-inset-top)) !important;
+    padding-bottom: calc(105px + env(safe-area-inset-bottom)) !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .glass-nav {

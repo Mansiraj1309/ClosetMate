@@ -144,8 +144,19 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setPreviewUrl(null);
         setBgRemoved(false);
         setBgError('');
-        setAutoTagError('');
     }, [editItem, isOpen]);
+
+    // Freeze background scrolling when modal is open to eliminate double scrollbars
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     // Derive available types when category/gender changes
     const typeOptions = useMemo(() => {

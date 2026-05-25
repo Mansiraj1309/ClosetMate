@@ -10,7 +10,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1500; /* Higher than BottomNav (1000) and FAB (1100) to overlay full-screen */
   padding: 1.5rem;
   overflow-y: auto;
 }
@@ -445,7 +445,7 @@
     height: 100%;
     max-height: 100vh;
     border-radius: 0;
-    padding: 3rem 1.5rem;
+    padding: calc(2rem + env(safe-area-inset-top)) 1.5rem calc(3.5rem + env(safe-area-inset-bottom)) 1.5rem !important; /* Generous top/bottom safe paddings to clear iOS home line */
   }
   
   .form-row {
