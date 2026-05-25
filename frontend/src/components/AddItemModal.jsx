@@ -177,12 +177,11 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsRemovingBg(true);
         setBgError('');
         try {
-            // Run bg removal using smaller model for mobile speed/stability
+            // Use 'medium' model for much more accurate cutouts on light/white clothing
             const blob = await removeBackground(file, {
-                model: 'small', // Use small model for mobile reliability
+                model: 'medium',
             });
 
-            // Composite onto a clean off-white canvas
             const img = new window.Image();
             const objectUrl = URL.createObjectURL(blob);
             img.src = objectUrl;
@@ -196,12 +195,33 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             // Fill with clean off-white background (matches wardrobe card style)
             ctx.fillStyle = '#f7f7f5';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw the cutout on top
             ctx.drawImage(img, 0, 0);
             URL.revokeObjectURL(objectUrl);
 
-            // Convert canvas to a new File
+            // ── Smart blank-detection: if result is >90% white, the model
+            //    over-erased the clothing (common with white/light items).
+            //    In that case, skip bg removal and keep the original photo.
+            const sampleCtx = canvas.getContext('2d');
+            const { data } = sampleCtx.getImageData(0, 0, canvas.width, canvas.height);
+            let whitePixels = 0;
+            const totalPixels = canvas.width * canvas.height;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+                if (r > 240 && g > 240 && b > 240) whitePixels++;
+            }
+            const whiteRatio = whitePixels / totalPixels;
+
+            if (whiteRatio > 0.90) {
+                // Result is mostly blank — fall back gracefully to original
+                setBgError('Background removal over-erased this light-coloured item. Using original photo instead.');
+                setProcessedFile(null);
+                setPreviewUrl(URL.createObjectURL(file));
+                setBgRemoved(false);
+                setIsRemovingBg(false);
+                return;
+            }
+
+            // Result looks good — use the cleaned image
             canvas.toBlob(async (finalBlob) => {
                 const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
                 setProcessedFile(cleanFile);
@@ -211,7 +231,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             }, 'image/jpeg', 0.92);
         } catch (err) {
             console.error('BG removal error:', err);
-            setBgError('Could not remove background. Check your connection (CDN model needed).');
+            setBgError('Could not remove background. Please try again.');
             setIsRemovingBg(false);
         }
     };
@@ -220,12 +240,14 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     const uploadFile = processedFile || file;
 
     const handleAutoTag = async () => {
-        if (!uploadFile) return;
+        if (!file) return;
         setIsAutoTagging(true);
         setAutoTagError('');
         try {
+            // Always send the ORIGINAL file to Gemini Vision for best accuracy.
+            // Background-removed images lose colour & texture info the AI needs.
             const reader = new FileReader();
-            reader.readAsDataURL(uploadFile);
+            reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64Full = reader.result;
                 const [meta, imageBase64] = base64Full.split(',');
