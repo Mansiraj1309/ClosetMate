@@ -177,9 +177,9 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsRemovingBg(true);
         setBgError('');
         try {
-            // Run bg removal using smaller model for mobile speed/stability
+            // Use 'medium' model for much more accurate cutouts on light/white clothing
             const blob = await removeBackground(file, {
-                model: 'small', // Use small model for mobile reliability
+                model: 'medium',
             });
 
             // Composite onto a clean off-white canvas
@@ -201,7 +201,29 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             ctx.drawImage(img, 0, 0);
             URL.revokeObjectURL(objectUrl);
 
-            // Convert canvas to a new File
+            // ── Smart blank-detection: if result is >90% white, the model
+            //    over-erased the clothing (common with white/light items).
+            const sampleCtx = canvas.getContext('2d');
+            const { data } = sampleCtx.getImageData(0, 0, canvas.width, canvas.height);
+            let whitePixels = 0;
+            const totalPixels = canvas.width * canvas.height;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+                if (r > 240 && g > 240 && b > 240) whitePixels++;
+            }
+            const whiteRatio = whitePixels / totalPixels;
+
+            if (whiteRatio > 0.90) {
+                // Result is mostly blank — fall back gracefully to original
+                setBgError('Background removal over-erased this light-coloured item. Using original photo instead.');
+                setProcessedFile(null);
+                setPreviewUrl(URL.createObjectURL(file));
+                setBgRemoved(false);
+                setIsRemovingBg(false);
+                return;
+            }
+
+            // Convert canvas to a new File (JPEG with off-white background as preferred)
             canvas.toBlob(async (finalBlob) => {
                 const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
                 setProcessedFile(cleanFile);
