@@ -333,6 +333,13 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         }
     };
 
+    const handleUndoRemoveBackground = () => {
+        setProcessedFile(null);
+        setPreviewUrl(URL.createObjectURL(file));
+        setBgRemoved(false);
+        console.log('User undid background removal, reverted to original image.');
+    };
+
     // The file to actually upload: processed (bg removed) or original
     const uploadFile = processedFile || file;
 
@@ -534,6 +541,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                             {file && !bgRemoved && (
                                 <button type="button" className={`bgremove-btn ${isRemovingBg ? 'loading' : ''}`} onClick={handleRemoveBackground} disabled={isRemovingBg}>
                                     {isRemovingBg ? <><Loader size={16} className="spin" /> Removing BG...</> : <><Image size={16} /> 🪄 Remove Background</>}
+                                </button>
+                            )}
+
+                            {file && bgRemoved && (
+                                <button type="button" className="bgremove-btn undo-btn" onClick={handleUndoRemoveBackground}>
+                                    ↩️ Undo Clean Look (Use Original)
                                 </button>
                             )}
                         </div>
