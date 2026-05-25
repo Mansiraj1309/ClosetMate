@@ -177,11 +177,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsRemovingBg(true);
         setBgError('');
         try {
-            // Use 'medium' model for much more accurate cutouts on light/white clothing
+            // Run bg removal using smaller model for mobile speed/stability
             const blob = await removeBackground(file, {
-                model: 'medium',
+                model: 'small', // Use small model for mobile reliability
             });
 
+            // Composite onto a clean off-white canvas
             const img = new window.Image();
             const objectUrl = URL.createObjectURL(blob);
             img.src = objectUrl;
@@ -192,42 +193,25 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             canvas.height = img.naturalHeight;
             const ctx = canvas.getContext('2d');
 
-            // Draw the cutout (keeps it transparent)
+            // Fill with clean off-white background (matches wardrobe card style)
+            ctx.fillStyle = '#f7f7f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the cutout on top
             ctx.drawImage(img, 0, 0);
             URL.revokeObjectURL(objectUrl);
 
-            // ── Smart blank-detection: if result is >90% transparent, the model
-            //    over-erased the clothing (common with white/light items).
-            const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            let transparentPixels = 0;
-            const totalPixels = canvas.width * canvas.height;
-            for (let i = 0; i < data.length; i += 4) {
-                const a = data[i + 3];
-                if (a < 10) transparentPixels++;
-            }
-            const transparentRatio = transparentPixels / totalPixels;
-
-            if (transparentRatio > 0.90) {
-                // Result is mostly blank — fall back gracefully to original
-                setBgError('Background removal over-erased this light-coloured item. Using original photo instead.');
-                setProcessedFile(null);
-                setPreviewUrl(URL.createObjectURL(file));
-                setBgRemoved(false);
-                setIsRemovingBg(false);
-                return;
-            }
-
-            // Result looks good — use the transparent PNG
+            // Convert canvas to a new File
             canvas.toBlob(async (finalBlob) => {
-                const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' });
+                const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
                 setProcessedFile(cleanFile);
-                setPreviewUrl(canvas.toDataURL('image/png'));
+                setPreviewUrl(canvas.toDataURL('image/jpeg', 0.92));
                 setBgRemoved(true);
                 setIsRemovingBg(false);
-            }, 'image/png');
+            }, 'image/jpeg', 0.92);
         } catch (err) {
             console.error('BG removal error:', err);
-            setBgError('Could not remove background. Please try again.');
+            setBgError('Could not remove background. Check your connection (CDN model needed).');
             setIsRemovingBg(false);
         }
     };
@@ -236,14 +220,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     const uploadFile = processedFile || file;
 
     const handleAutoTag = async () => {
-        if (!file) return;
+        if (!uploadFile) return;
         setIsAutoTagging(true);
         setAutoTagError('');
         try {
-            // Always send the ORIGINAL file to Gemini Vision for best accuracy.
-            // Background-removed images lose colour & texture info the AI needs.
             const reader = new FileReader();
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(uploadFile);
             reader.onload = async () => {
                 const base64Full = reader.result;
                 const [meta, imageBase64] = base64Full.split(',');
