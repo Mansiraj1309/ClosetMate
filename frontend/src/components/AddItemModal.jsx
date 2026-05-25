@@ -359,64 +359,74 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsAutoTagging(true);
         setAutoTagError('');
         console.log('--- STARTING AI AUTO-TAGGING ---');
-        console.log('Sending original file to Gemini for analysis:', file.name);
 
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                const base64Full = reader.result;
-                const [meta, imageBase64] = base64Full.split(',');
-                const mimeType = meta.match(/:(.*?);/)[1];
+        return new Promise(async (resolve) => {
+            try {
+                // Resize the image to 1024 max dimension to speed up auto-tagging and prevent huge base64 payloads causing 413 or timeout
+                const resizedForTagging = await resizeImage(file, 1024);
+                console.log('Sending resized file to Gemini for analysis:', resizedForTagging.name, 'size:', resizedForTagging.size);
 
-                try {
-                    const res = await fetch(`${API_BASE}/api/wardrobe/analyze-image`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ imageBase64, mimeType }),
-                    });
+                const reader = new FileReader();
+                reader.readAsDataURL(resizedForTagging);
+                reader.onload = async () => {
+                    const base64Full = reader.result;
+                    const [meta, imageBase64] = base64Full.split(',');
+                    const mimeType = meta.match(/:(.*?);/)[1];
 
-                    console.log('AI Auto-tagging network response status:', res.status);
+                    try {
+                        const res = await fetch(`${API_BASE}/api/wardrobe/analyze-image`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ imageBase64, mimeType }),
+                        });
 
-                    if (res.ok) {
-                        const tags = await res.json();
-                        console.log('AI Auto-tagging successfully returned tags:', tags);
-                        setFormData(prev => ({
-                            ...prev,
-                            category: tags.category || prev.category,
-                            type: tags.type || prev.type,
-                            color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
-                            customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
-                            season: tags.season || prev.season,
-                            formality: tags.formality || prev.formality,
-                            style: tags.style || prev.style,
-                            occasions: tags.occasions || prev.occasions,
-                            styleNotes: tags.styleNotes || prev.styleNotes,
-                        }));
-                    } else {
-                        const err = await res.json();
-                        console.error('AI Auto-tagging server error:', err);
-                        setAutoTagError(err.message || 'Auto-tagging failed.');
-                        alert('AI Auto-tagging failed: ' + (err.message || 'Server error.'));
+                        console.log('AI Auto-tagging network response status:', res.status);
+
+                        if (res.ok) {
+                            const tags = await res.json();
+                            console.log('AI Auto-tagging successfully returned tags:', tags);
+                            setFormData(prev => ({
+                                ...prev,
+                                category: tags.category || prev.category,
+                                type: tags.type || prev.type,
+                                color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
+                                customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
+                                season: tags.season || prev.season,
+                                formality: tags.formality || prev.formality,
+                                style: tags.style || prev.style,
+                                occasions: tags.occasions || prev.occasions,
+                                styleNotes: tags.styleNotes || prev.styleNotes,
+                            }));
+                        } else {
+                            const err = await res.json();
+                            console.error('AI Auto-tagging server error:', err);
+                            setAutoTagError(err.message || 'Auto-tagging failed.');
+                            alert('AI Auto-tagging failed: ' + (err.message || 'Server error.'));
+                        }
+                    } catch (err) {
+                        console.error('AI Auto-tagging network error:', err);
+                        setAutoTagError('Auto-tagging network request failed.');
+                        alert('AI Auto-tagging network request failed. Please check your internet connection.');
+                    } finally {
+                        setIsAutoTagging(false);
+                        resolve();
                     }
-                } catch (err) {
-                    console.error('AI Auto-tagging network error:', err);
-                    setAutoTagError('Auto-tagging network request failed.');
-                    alert('AI Auto-tagging network request failed. Please check your internet connection.');
-                } finally {
+                };
+                reader.onerror = () => {
+                    console.error('FileReader failed to read the file.');
+                    setAutoTagError('Could not read file.');
                     setIsAutoTagging(false);
                     resolve();
-                }
-            };
-            reader.onerror = () => {
-                console.error('FileReader failed to read the file.');
-                setAutoTagError('Could not read file.');
+                };
+            } catch (resizeErr) {
+                console.error('Failed to resize image for auto-tagging:', resizeErr);
+                setAutoTagError('Failed to prepare image.');
                 setIsAutoTagging(false);
                 resolve();
-            };
+            }
         });
     };
 
@@ -470,8 +480,13 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 }
             } else {
                 // POST FormData for new item
+                let fileToUpload = uploadFile;
+                if (!processedFile && file) {
+                    // Resize original image to 1200px before uploading to speed up uploads and prevent network issues/timeouts on Render
+                    fileToUpload = await resizeImage(file, 1200);
+                }
                 const payload = new FormData();
-                payload.append('image', uploadFile);  // use processed file if bg was removed
+                payload.append('image', fileToUpload);  // use processed file if bg was removed, otherwise resized original
                 payload.append('name', formData.name);
                 payload.append('category', formData.category);
                 payload.append('type', formData.type);
