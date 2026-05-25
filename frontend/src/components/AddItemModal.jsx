@@ -220,12 +220,14 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     const uploadFile = processedFile || file;
 
     const handleAutoTag = async () => {
-        if (!uploadFile) return;
+        if (!file) return;
         setIsAutoTagging(true);
         setAutoTagError('');
         try {
+            // Always send the ORIGINAL file to Gemini Vision for best accuracy.
+            // Background-removed images lose colour & texture info the AI needs.
             const reader = new FileReader();
-            reader.readAsDataURL(uploadFile);
+            reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64Full = reader.result;
                 const [meta, imageBase64] = base64Full.split(',');
