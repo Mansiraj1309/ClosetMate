@@ -322,13 +322,14 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     // The file to actually upload: processed (bg removed) or original
     const uploadFile = processedFile || file;
 
-    const handleAutoTag = async () => {
-        if (!file) return;
+    const handleAutoTag = () => {
+        if (!file) return Promise.resolve();
         setIsAutoTagging(true);
         setAutoTagError('');
-        try {
-            // Always send the ORIGINAL file to Gemini Vision for best accuracy.
-            // Background-removed images lose colour & texture info the AI needs.
+        console.log('--- STARTING AI AUTO-TAGGING ---');
+        console.log('Sending original file to Gemini for analysis:', file.name);
+
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -336,43 +337,55 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 const [meta, imageBase64] = base64Full.split(',');
                 const mimeType = meta.match(/:(.*?);/)[1];
 
-                const res = await fetch(`${API_BASE}/api/wardrobe/analyze-image`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ imageBase64, mimeType }),
-                });
+                try {
+                    const res = await fetch(`${API_BASE}/api/wardrobe/analyze-image`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ imageBase64, mimeType }),
+                    });
 
-                if (res.ok) {
-                    const tags = await res.json();
-                    setFormData(prev => ({
-                        ...prev,
-                        category: tags.category || prev.category,
-                        type: tags.type || prev.type,
-                        color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
-                        customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
-                        season: tags.season || prev.season,
-                        formality: tags.formality || prev.formality,
-                        style: tags.style || prev.style,
-                        occasions: tags.occasions || prev.occasions,
-                        styleNotes: tags.styleNotes || prev.styleNotes,
-                    }));
-                } else {
-                    const err = await res.json();
-                    setAutoTagError(err.message || 'Auto-tagging failed.');
+                    console.log('AI Auto-tagging network response status:', res.status);
+
+                    if (res.ok) {
+                        const tags = await res.json();
+                        console.log('AI Auto-tagging successfully returned tags:', tags);
+                        setFormData(prev => ({
+                            ...prev,
+                            category: tags.category || prev.category,
+                            type: tags.type || prev.type,
+                            color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
+                            customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
+                            season: tags.season || prev.season,
+                            formality: tags.formality || prev.formality,
+                            style: tags.style || prev.style,
+                            occasions: tags.occasions || prev.occasions,
+                            styleNotes: tags.styleNotes || prev.styleNotes,
+                        }));
+                    } else {
+                        const err = await res.json();
+                        console.error('AI Auto-tagging server error:', err);
+                        setAutoTagError(err.message || 'Auto-tagging failed.');
+                        alert('AI Auto-tagging failed: ' + (err.message || 'Server error.'));
+                    }
+                } catch (err) {
+                    console.error('AI Auto-tagging network error:', err);
+                    setAutoTagError('Auto-tagging network request failed.');
+                    alert('AI Auto-tagging network request failed. Please check your internet connection.');
+                } finally {
+                    setIsAutoTagging(false);
+                    resolve();
                 }
-                setIsAutoTagging(false);
             };
             reader.onerror = () => {
+                console.error('FileReader failed to read the file.');
                 setAutoTagError('Could not read file.');
                 setIsAutoTagging(false);
+                resolve();
             };
-        } catch (err) {
-            setAutoTagError('Auto-tagging failed. Try manually.');
-            setIsAutoTagging(false);
-        }
+        });
     };
 
     const handleSubmit = async (e) => {
