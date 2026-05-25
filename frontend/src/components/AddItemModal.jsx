@@ -36,6 +36,51 @@ const INITIAL_FORM = {
     purchaseDate: '',
 };
 
+// Helper: Downscale image to a max dimension to speed up CPU inference and save memory
+const resizeImage = (file, maxDim = 1024) => {
+    return new Promise((resolve) => {
+        const img = new window.Image();
+        const url = URL.createObjectURL(file);
+        img.src = url;
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            let width = img.naturalWidth;
+            let height = img.naturalHeight;
+
+            if (width <= maxDim && height <= maxDim) {
+                resolve(file);
+                return;
+            }
+
+            if (width > height) {
+                if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                }
+            } else {
+                if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                const resized = new File([blob], file.name, { type: 'image/jpeg' });
+                resolve(resized);
+            }, 'image/jpeg', 0.90);
+        };
+        img.onerror = () => {
+            resolve(file); // Fallback to original on error
+        };
+    });
+};
+
 const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initialData }) => {
     const [step, setStep] = useState(1);
     const [file, setFile] = useState(null);
@@ -177,45 +222,46 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         setIsRemovingBg(true);
         setBgError('');
         try {
-            // Use 'medium' model for much more accurate cutouts on light/white clothing
-            const blob = await removeBackground(file, {
+            // 1. Resize image to maximum 1024px to speed up CPU inference and prevent OOM
+            const resizedFile = await resizeImage(file, 1024);
+
+            // 2. Run background removal using CPU to prevent iOS/Safari WebGL color corruption/inversion bugs
+            const blob = await removeBackground(resizedFile, {
                 model: 'medium',
+                device: 'cpu',
             });
 
-            // Composite onto a clean off-white canvas
-            const img = new window.Image();
+            // 3. Load the cutout PNG to check transparency *directly* BEFORE compositing on solid off-white background
+            const cutoutImg = new window.Image();
             const objectUrl = URL.createObjectURL(blob);
-            img.src = objectUrl;
-            await new Promise(resolve => img.onload = resolve);
+            cutoutImg.src = objectUrl;
+            await new Promise((resolve) => {
+                cutoutImg.onload = resolve;
+                cutoutImg.onerror = () => resolve(); // Handle loading error gracefully
+            });
 
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext('2d');
-
-            // Fill with clean off-white background (matches wardrobe card style)
-            ctx.fillStyle = '#f7f7f5';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw the cutout on top
-            ctx.drawImage(img, 0, 0);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cutoutImg.naturalWidth || 500;
+            tempCanvas.height = cutoutImg.naturalHeight || 500;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(cutoutImg, 0, 0);
             URL.revokeObjectURL(objectUrl);
 
-            // ── Smart blank-detection: if result is >90% white, the model
-            //    over-erased the clothing (common with white/light items).
-            const sampleCtx = canvas.getContext('2d');
-            const { data } = sampleCtx.getImageData(0, 0, canvas.width, canvas.height);
-            let whitePixels = 0;
-            const totalPixels = canvas.width * canvas.height;
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i + 1], b = data[i + 2];
-                if (r > 240 && g > 240 && b > 240) whitePixels++;
+            // Calculate percentage of opaque pixels in the cutout
+            const { data } = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            let opaquePixels = 0;
+            const totalPixels = tempCanvas.width * tempCanvas.height;
+            for (let i = 3; i < data.length; i += 4) {
+                if (data[i] > 10) { // If pixel is not transparent
+                    opaquePixels++;
+                }
             }
-            const whiteRatio = whitePixels / totalPixels;
+            const opaqueRatio = opaquePixels / totalPixels;
 
-            if (whiteRatio > 0.90) {
-                // Result is mostly blank — fall back gracefully to original
-                setBgError('Background removal over-erased this light-coloured item. Using original photo instead.');
+            // 4. Smart blank-detection: if less than 1.5% of pixels are opaque,
+            // the model over-erased the item. Fall back gracefully to original photo.
+            if (opaqueRatio < 0.015) {
+                setBgError('Background removal over-erased this item. Using original photo instead.');
                 setProcessedFile(null);
                 setPreviewUrl(URL.createObjectURL(file));
                 setBgRemoved(false);
@@ -223,7 +269,20 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 return;
             }
 
-            // Convert canvas to a new File (JPEG with off-white background as preferred)
+            // 5. Composite onto a beautiful clean off-white background
+            const canvas = document.createElement('canvas');
+            canvas.width = tempCanvas.width;
+            canvas.height = tempCanvas.height;
+            const ctx = canvas.getContext('2d');
+
+            // Fill with solid off-white (#f7f7f5)
+            ctx.fillStyle = '#f7f7f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the transparent cutout on top
+            ctx.drawImage(cutoutImg, 0, 0);
+
+            // Convert canvas to a high-quality JPEG
             canvas.toBlob(async (finalBlob) => {
                 const cleanFile = new File([finalBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
                 setProcessedFile(cleanFile);
@@ -233,7 +292,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             }, 'image/jpeg', 0.92);
         } catch (err) {
             console.error('BG removal error:', err);
-            setBgError('Could not remove background. Check your connection (CDN model needed).');
+            setBgError('Could not remove background. Check your connection or try again.');
             setIsRemovingBg(false);
         }
     };

@@ -192,7 +192,7 @@ Return ONLY a raw JSON object with EXACTLY these fields:
   "gender": "Men", "Women" or "Unisex",
   "category": One of ["Tops", "Bottoms", "Dresses", "Loungewear", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
   "type": Specific type from the category (e.g., "Oversized T-shirt", "Palazzo", "Saree", "Heels", "Kurta Pajama"),
-  "color": Primary color name (e.g., "Navy Blue", "Emerald Green", "Burgundy"),
+  "color": Primary color name (Prefer standard colors: "Black", "White", "Blue", "Red", "Green", "Beige", "Brown", "Grey", "Navy", "Pink", "Yellow", "Orange", "Purple", "Maroon", "Olive", "Teal". If it is a distinct shade, use that shade, e.g. "Burgundy", "Peach", "Mint Green", "Rust"),
   "season": One of ["Summer", "Winter", "Rainy", "All Season"],
   "formality": One of ["Casual", "Semi-Formal", "Formal", "Party", "Ethnic", "Sporty"],
   "style": One of ["Minimal", "Streetwear", "Classic", "Bohemian", "Gothic", "Sporty", "Vintage", "Chic"],
@@ -200,7 +200,7 @@ Return ONLY a raw JSON object with EXACTLY these fields:
   "styleNotes": A single premium styling tip (e.g., "Pairs perfectly with high-waisted trousers for a chic office look.")
 }
 
-Be specific and accurate. If it's a specific Indian ethnic wear, identify it correctly (e.g., "Sherwani", "Anarkali").`;
+Be specific and accurate. Pay close attention to colors and textures. Make sure you don't confuse dark colors like Burgundy, Maroon, Navy Blue, or Dark Green with Black. If it's a specific Indian ethnic wear, identify it correctly (e.g., "Sherwani", "Anarkali").`;
 
         let result;
         let attempts = 0;
