@@ -120,7 +120,7 @@
         border-left: none !important;
         border-right: none !important;
         border-top: none !important;
-        padding-top: calc(env(safe-area-inset-top) + 0.6rem);
+        padding-top: 0.6rem;
         padding-bottom: 0.6rem;
         padding-left: 1rem;
         padding-right: 1rem;
