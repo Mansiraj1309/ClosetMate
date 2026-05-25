@@ -221,15 +221,20 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
         if (!file) return;
         setIsRemovingBg(true);
         setBgError('');
+        console.log('--- STARTING BACKGROUND REMOVAL ---');
+        console.log('Original file:', file.name, 'size:', file.size, 'type:', file.type);
         try {
             // 1. Resize image to maximum 1024px to speed up CPU inference and prevent OOM
             const resizedFile = await resizeImage(file, 1024);
+            console.log('Resized image successfully:', resizedFile.size);
 
             // 2. Run background removal using CPU to prevent iOS/Safari WebGL color corruption/inversion bugs
+            console.log('Running background removal on CPU...');
             const blob = await removeBackground(resizedFile, {
                 model: 'medium',
                 device: 'cpu',
             });
+            console.log('Finished background removal. Output size:', blob.size);
 
             // 3. Load the cutout PNG to check transparency *directly* BEFORE compositing on solid off-white background
             const cutoutImg = new window.Image();
@@ -257,10 +262,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 }
             }
             const opaqueRatio = opaquePixels / totalPixels;
+            console.log('Cutout opacity ratio:', opaqueRatio);
 
             // 4. Smart blank-detection: if less than 1.5% of pixels are opaque,
             // the model over-erased the item. Fall back gracefully to original photo.
             if (opaqueRatio < 0.015) {
+                console.warn('Over-erasing detected! Opaque ratio too low. Falling back to original image.');
                 setBgError('Background removal over-erased this item. Using original photo instead.');
                 setProcessedFile(null);
                 setPreviewUrl(URL.createObjectURL(file));
@@ -289,6 +296,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 setPreviewUrl(canvas.toDataURL('image/jpeg', 0.92));
                 setBgRemoved(true);
                 setIsRemovingBg(false);
+                console.log('Successfully composited cutout onto #f7f7f5 background.');
             }, 'image/jpeg', 0.92);
         } catch (err) {
             console.error('BG removal error:', err);
