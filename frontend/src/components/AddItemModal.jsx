@@ -252,17 +252,31 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             tempCtx.drawImage(cutoutImg, 0, 0);
             URL.revokeObjectURL(objectUrl);
 
-            // Calculate percentage of opaque pixels in the cutout
-            const { data } = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            // ── Alpha Channel Restoration to bypass Safari/iOS WebKit WebAssembly precision bugs! ──
+            // On iOS Safari WebViews, WebAssembly compilation/precision bugs can cause the model output
+            // mask to contain extremely low alpha values (e.g. 10% opacity) for the clothing, which makes
+            // the garment look washed-out, faint, or white.
+            // By programmatically scanning the image data and restoring the alpha channel to 255 (fully opaque)
+            // for all foreground pixels, we completely restore the rich original colors of the garment.
+            const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imgData.data;
             let opaquePixels = 0;
             const totalPixels = tempCanvas.width * tempCanvas.height;
-            for (let i = 3; i < data.length; i += 4) {
-                if (data[i] > 10) { // If pixel is not transparent
+
+            for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3];
+                if (alpha > 15) { // If pixel is part of the clothing foreground
                     opaquePixels++;
+                    data[i + 3] = 255; // Restore to 100% full opacity to bring back the exact rich original color!
+                } else {
+                    data[i + 3] = 0; // Set background to completely transparent
                 }
             }
+            // Write the corrected, fully-vibrant pixel data back to the canvas
+            tempCtx.putImageData(imgData, 0, 0);
+
             const opaqueRatio = opaquePixels / totalPixels;
-            console.log('Cutout opacity ratio:', opaqueRatio);
+            console.log('Cutout opacity ratio after Safari alpha restoration:', opaqueRatio);
 
             // 4. Smart blank-detection: if less than 1.5% of pixels are opaque,
             // the model over-erased the item. Fall back gracefully to original photo.
