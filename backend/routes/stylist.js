@@ -7,7 +7,7 @@ const { GoogleGenAI } = require('@google/genai'); // ✅ FIXED: use new SDK, not
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Helper: call Gemini with retry on rate limit
-const callGemini = async (prompt, model = 'gemini-2.5-flash') => {
+const callGemini = async (prompt, model = 'gemini-2.5-pro') => {
     const maxAttempts = 3;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
