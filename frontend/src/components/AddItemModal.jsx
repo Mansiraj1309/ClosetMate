@@ -228,6 +228,15 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             const resizedFile = await resizeImage(file, 1024);
             console.log('Resized image successfully:', resizedFile.size);
 
+            // Load the original uncorrupted resized image in memory to get rich colors
+            const originalImg = new window.Image();
+            const originalUrl = URL.createObjectURL(resizedFile);
+            originalImg.src = originalUrl;
+            await new Promise((resolve) => {
+                originalImg.onload = resolve;
+                originalImg.onerror = () => resolve(); // Handle gracefully
+            });
+
             // 2. Run background removal using CPU to prevent iOS/Safari WebGL color corruption/inversion bugs
             console.log('Running background removal on CPU...');
             const blob = await removeBackground(resizedFile, {
@@ -236,7 +245,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             });
             console.log('Finished background removal. Output size:', blob.size);
 
-            // 3. Load the cutout PNG to check transparency *directly* BEFORE compositing on solid off-white background
+            // 3. Load the cutout PNG (which has the correct shape mask, but buggy colors in Safari)
             const cutoutImg = new window.Image();
             const objectUrl = URL.createObjectURL(blob);
             cutoutImg.src = objectUrl;
@@ -246,18 +255,14 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             });
 
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = cutoutImg.naturalWidth || 500;
-            tempCanvas.height = cutoutImg.naturalHeight || 500;
+            tempCanvas.width = cutoutImg.naturalWidth || originalImg.naturalWidth || 500;
+            tempCanvas.height = cutoutImg.naturalHeight || originalImg.naturalHeight || 500;
             const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(cutoutImg, 0, 0);
-            URL.revokeObjectURL(objectUrl);
 
-            // ── Alpha Channel Restoration to bypass Safari/iOS WebKit WebAssembly precision bugs! ──
-            // On iOS Safari WebViews, WebAssembly compilation/precision bugs can cause the model output
-            // mask to contain extremely low alpha values (e.g. 10% opacity) for the clothing, which makes
-            // the garment look washed-out, faint, or white.
-            // By programmatically scanning the image data and restoring the alpha channel to 255 (fully opaque)
-            // for all foreground pixels, we completely restore the rich original colors of the garment.
+            // Draw the transparent cutout first (gets the correct alpha/shape mask from background remover)
+            tempCtx.drawImage(cutoutImg, 0, 0, tempCanvas.width, tempCanvas.height);
+
+            // ── Alpha Channel Restoration to binarize and bypass Safari float32 bugs ──
             const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             const data = imgData.data;
             let opaquePixels = 0;
@@ -267,16 +272,25 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 const alpha = data[i + 3];
                 if (alpha > 15) { // If pixel is part of the clothing foreground
                     opaquePixels++;
-                    data[i + 3] = 255; // Restore to 100% full opacity to bring back the exact rich original color!
+                    data[i + 3] = 255; // Set mask alpha to fully opaque
                 } else {
-                    data[i + 3] = 0; // Set background to completely transparent
+                    data[i + 3] = 0; // Set mask background to fully transparent
                 }
             }
-            // Write the corrected, fully-vibrant pixel data back to the canvas
             tempCtx.putImageData(imgData, 0, 0);
 
+            // ── Mask the original uncorrupted rich-color image using our restored alpha mask! ──
+            // Use 'source-in' composite mode: keeps originalImg only where tempCanvas has opaque pixels (our shape mask)
+            tempCtx.globalCompositeOperation = 'source-in';
+            tempCtx.drawImage(originalImg, 0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.globalCompositeOperation = 'source-over'; // Reset to default
+
+            // Revoke URLs to free memory
+            URL.revokeObjectURL(objectUrl);
+            URL.revokeObjectURL(originalUrl);
+
             const opaqueRatio = opaquePixels / totalPixels;
-            console.log('Cutout opacity ratio after Safari alpha restoration:', opaqueRatio);
+            console.log('Cutout opacity ratio after Safari alpha mask extraction:', opaqueRatio);
 
             // 4. Smart blank-detection: if less than 1.5% of pixels are opaque,
             // the model over-erased the item. Fall back gracefully to original photo.
@@ -300,8 +314,8 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             ctx.fillStyle = '#f7f7f5';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the transparent cutout on top
-            ctx.drawImage(cutoutImg, 0, 0);
+            // Draw our perfectly masked, rich-colored cutout on top
+            ctx.drawImage(tempCanvas, 0, 0);
 
             // Convert canvas to a high-quality JPEG
             canvas.toBlob(async (finalBlob) => {
@@ -310,7 +324,7 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                 setPreviewUrl(canvas.toDataURL('image/jpeg', 0.92));
                 setBgRemoved(true);
                 setIsRemovingBg(false);
-                console.log('Successfully composited cutout onto #f7f7f5 background.');
+                console.log('Successfully composited rich-colored cutout onto #f7f7f5 background.');
             }, 'image/jpeg', 0.92);
         } catch (err) {
             console.error('BG removal error:', err);
