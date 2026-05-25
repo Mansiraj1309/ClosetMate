@@ -450,7 +450,9 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
 
                 if (res.ok) {
                     const updated = await res.json();
-                    onUpdate(updated);
+                    if (typeof onUpdate === 'function') {
+                        onUpdate(updated);
+                    }
                     onClose();
                 } else {
                     alert('Failed to update item.');
@@ -483,7 +485,9 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
 
                 if (res.ok) {
                     const newItem = await res.json();
-                    onAdd(newItem);
+                    if (typeof onAdd === 'function') {
+                        onAdd(newItem);
+                    }
                     onClose();
                     // State will be reset by the useEffect when modal closes/opens
                 } else {
