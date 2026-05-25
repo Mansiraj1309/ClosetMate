@@ -11,6 +11,7 @@
     background: rgba(15, 15, 20, 0.7) !important;
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    overflow: visible;
 }
 
 .light-mode .app-header {
@@ -18,11 +19,17 @@
     border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
+.header-left {
+    flex: 1;
+    min-width: 0;
+}
+
 .logo-text {
     font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .logo-text span {
@@ -33,20 +40,39 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .icon-btn {
     background: rgba(255, 255, 255, 0.05);
     border: none;
     color: var(--text-primary);
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.icon-btn.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.light-mode .icon-btn.theme-toggle {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.icon-btn.theme-toggle:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: transparent;
+    transform: rotate(20deg) scale(1.1);
 }
 
 .light-mode .icon-btn {
@@ -57,20 +83,29 @@
     transform: scale(0.9);
 }
 
+.profile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
 .avatar-placeholder {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     background: var(--accent-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    flex-shrink: 0;
 }
 
 .avatar-img {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--accent-primary);
@@ -79,15 +114,30 @@
 @media (max-width: 768px) {
     .app-header {
         top: 0;
-        /* Break out of .app-container 1rem padding */
         margin: -1rem -1rem 1rem -1rem !important;
         width: 100vw;
         border-radius: 0 !important;
         border-left: none !important;
         border-right: none !important;
         border-top: none !important;
-        padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+        padding-top: calc(env(safe-area-inset-top) + 0.6rem);
+        padding-bottom: 0.6rem;
         padding-left: 1rem;
         padding-right: 1rem;
+    }
+
+    .header-right {
+        gap: 0.35rem;
+    }
+
+    .icon-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .avatar-placeholder,
+    .avatar-img {
+        width: 34px;
+        height: 34px;
     }
 }
