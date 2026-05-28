@@ -75,7 +75,7 @@ const AuthPage = () => {
         setError('');
         setLoading(true);
 
-        const clientId = '1042784534726-25f01n88j0p6o2bphl9r7tbe99k4v27t.apps.googleusercontent.com';
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1042784534726-25f01n88j0p6o2bphl9r7tbe99k4v27t.apps.googleusercontent.com';
         
         // Dynamically determine the redirect URI based on environment
         const redirectUri = window.location.hostname === 'localhost' 
