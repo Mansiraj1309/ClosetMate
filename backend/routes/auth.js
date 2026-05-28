@@ -60,6 +60,39 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// @route   POST /api/auth/google-login
+// @desc    Mock Google Login (auto-register if not exists)
+router.post('/google-login', async (req, res) => {
+    try {
+        const { name, email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        let user = await User.findOne({ email });
+        if (!user) {
+            // Auto-create user if they don't exist
+            // Set a random password since they login via Google
+            const randomPassword = Math.random().toString(36).substring(2, 10);
+            user = await User.create({
+                name: name || 'Google User',
+                email,
+                password: randomPassword
+            });
+        }
+
+        const token = generateToken(user._id);
+
+        res.json({
+            token,
+            user: { id: user._id, name: user.name, email: user.email }
+        });
+    } catch (err) {
+        console.error('Google login error:', err);
+        res.status(500).json({ message: 'Server error during Google login' });
+    }
+});
+
 // @route   GET /api/auth/me
 // @desc    Get current user info
 router.get('/me', auth, async (req, res) => {

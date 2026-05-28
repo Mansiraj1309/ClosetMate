@@ -56,6 +56,24 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
     };
 
+    const googleLogin = async (name, email) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/auth/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            localStorage.setItem('closetmate_token', data.token);
+            setToken(data.token);
+            setUser(data.user);
+        } catch (err) {
+            alert(`Google Login Error: ${err.message}`);
+            throw err;
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('closetmate_token');
         setToken(null);
@@ -93,7 +111,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateBudget, updateProfile }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, googleLogin, logout, updateBudget, updateProfile }}>
             {!loading && children}
         </AuthContext.Provider>
     );
