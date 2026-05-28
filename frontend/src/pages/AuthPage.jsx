@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Mail, Lock, User, ArrowRight, Loader, X as XIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
@@ -12,89 +12,112 @@ const AuthPage = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Dynamic Google Access Token Login handler
+    const handleAccessTokenLogin = async (accessToken) => {
+        setError('');
+        setLoading(true);
+        try {
+            // Fetch real user info from Google's People API
+            const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+            if (!response.ok) throw new Error('Failed to fetch profile details from Google');
+            
+            const profileData = await response.json();
+            const { name: gName, email: gEmail } = profileData;
+            
+            if (gEmail) {
+                // Authenticate / register via our backend
+                await googleLogin(gName || 'Google User', gEmail);
+            } else {
+                throw new Error('No email address returned from Google account');
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Listen for Google Auth callback messaging & storage hooks
+    useEffect(() => {
+        // 1. Popup cross-origin message listener
+        const handleMessage = (event) => {
+            if (event.data && event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+                const token = event.data.accessToken;
+                if (token) {
+                    handleAccessTokenLogin(token);
+                }
+            } else if (event.data && event.data.type === 'GOOGLE_AUTH_FAILURE') {
+                setError(event.data.error || 'Google Sign-In failed');
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // 2. Full-page redirect storage listener fallback (e.g. mobile Safari/Chrome)
+        const token = localStorage.getItem('google_auth_access_token');
+        if (token) {
+            localStorage.removeItem('google_auth_access_token');
+            handleAccessTokenLogin(token);
+        }
+
+        const authError = localStorage.getItem('google_auth_error');
+        if (authError) {
+            localStorage.removeItem('google_auth_error');
+            setError(authError);
+        }
+
+        return () => {
+            window.removeEventListener('message', handleMessage);
+        };
+    }, []);
+
     const handleGoogleSignIn = () => {
         setError('');
         setLoading(true);
 
         const clientId = '1042784534726-25f01n88j0p6o2bphl9r7tbe99k4v27t.apps.googleusercontent.com';
-        const redirectUri = window.location.origin;
+        
+        // Dynamically determine the redirect URI based on environment
+        const redirectUri = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5173/google-callback.html' 
+            : 'https://closetmate-n5l2.onrender.com/google-callback.html';
+            
         const scope = 'openid email profile';
         const responseType = 'token';
         
         // Build Google OAuth2 authorization URL
-        // Using prompt=select_account forces Google to show their active account chooser list
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&prompt=select_account`;
         
-        // Center the popup window on screen
+        // Attempt popup opening centered on screen
         const width = 500;
         const height = 650;
         const left = window.screen.width / 2 - width / 2;
         const top = window.screen.height / 2 - height / 2;
         
-        const popup = window.open(
-            authUrl,
-            'GoogleSignIn',
-            `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,status=no,location=no`
-        );
-        
-        if (!popup) {
-            setError('Popup blocked! Please allow popups for this site to sign in with Google.');
-            setLoading(false);
-            return;
-        }
-        
-        const checkPopupInterval = setInterval(async () => {
-            if (!popup || popup.closed) {
-                clearInterval(checkPopupInterval);
-                setLoading(false);
-                return;
-            }
+        try {
+            const popup = window.open(
+                authUrl,
+                'GoogleSignIn',
+                `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,status=no,location=no`
+            );
             
-            try {
-                // Check if popup has redirected back to our origin
-                const popupUrl = popup.location.href;
-                
-                if (popupUrl && popupUrl.startsWith(redirectUri)) {
-                    clearInterval(checkPopupInterval);
-                    
-                    const hash = popup.location.hash;
-                    popup.close();
-                    
-                    if (hash) {
-                        const params = new URLSearchParams(hash.substring(1));
-                        const accessToken = params.get('access_token');
-                        
-                        if (accessToken) {
-                            // Fetch real user info from Google's People API
-                            const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-                            if (!response.ok) throw new Error('Failed to fetch profile details from Google');
-                            
-                            const profileData = await response.json();
-                            const { name: gName, email: gEmail } = profileData;
-                            
-                            if (gEmail) {
-                                // Authenticate / register via our backend
-                                await googleLogin(gName || 'Google User', gEmail);
-                            } else {
-                                throw new Error('No email address returned from Google account');
-                            }
-                        } else {
-                            throw new Error('Google Sign-In was cancelled or failed to retrieve token.');
-                        }
-                    } else {
-                        throw new Error('Failed to retrieve authentication token from Google.');
+            // If the popup is blocked, fall back instantly to direct full page redirection
+            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                console.log('Popup blocked or failed. Redirecting directly...');
+                window.location.href = authUrl;
+            } else {
+                // Periodically check if popup was closed by user without signing in
+                const checkClosedInterval = setInterval(() => {
+                    if (!popup || popup.closed) {
+                        clearInterval(checkClosedInterval);
+                        setLoading(false);
                     }
-                }
-            } catch (err) {
-                // Cross-origin exceptions are expected until Google redirects back to our origin.
-                // If it is a real error from our API/Login, display it.
-                if (err.name && err.name !== 'SecurityError' && !err.message.includes('Permission denied') && !err.message.includes('Block a frame')) {
-                    clearInterval(checkPopupInterval);
-                    setError(err.message);
-                    setLoading(false);
-                }
+                }, 1000);
             }
-        }, 500);
+        } catch (e) {
+            console.log('Exception while opening popup, redirecting directly:', e);
+            window.location.href = authUrl;
+        }
     };
 
     const handleSubmit = async (e) => {

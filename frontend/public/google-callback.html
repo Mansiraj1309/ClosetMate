@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating with Google...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #121214;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #6366f1;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner"></div>
+    <h3>Connecting your Google Account...</h3>
+    <p style="color: #a1a1aa; font-size: 14px;">Please wait while we redirect you back to ClosetMate.</p>
+
+    <script>
+        // Extract token from Google redirect hash
+        const hash = window.location.hash;
+        if (hash) {
+            const params = new URLSearchParams(hash.substring(1));
+            const accessToken = params.get('access_token');
+            const error = params.get('error');
+
+            if (accessToken) {
+                // Send token back to the parent window
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', accessToken }, '*');
+                } else {
+                    // Fallback for full redirects where opener is not available
+                    localStorage.setItem('google_auth_access_token', accessToken);
+                }
+                // Close the popup window
+                setTimeout(() => { window.close(); }, 500);
+            } else if (error) {
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error }, '*');
+                } else {
+                    localStorage.setItem('google_auth_error', error);
+                }
+                setTimeout(() => { window.close(); }, 500);
+            }
+        } else {
+            document.body.innerHTML = "<h3>Error</h3><p style='color: #ef4444;'>No authentication details received from Google. Closing...</p>";
+            setTimeout(() => { window.close(); }, 2000);
+        }
+    </script>
+</body>
+</html>
