@@ -66,8 +66,40 @@ const AuthPage = () => {
             setError(authError);
         }
 
+        // 3. Listen for Capacitor native deep links (custom URL scheme launches)
+        let deepLinkListener = null;
+        if (window.Capacitor) {
+            import('@capacitor/app').then(({ App }) => {
+                deepLinkListener = App.addListener('appUrlOpen', (event) => {
+                    const url = event.url;
+                    if (url && url.includes('closetmate://google-auth')) {
+                        const hashIndex = url.indexOf('#');
+                        if (hashIndex !== -1) {
+                            const hash = url.substring(hashIndex + 1);
+                            const params = new URLSearchParams(hash);
+                            const accessToken = params.get('access_token');
+                            const errorVal = params.get('error');
+                            
+                            if (accessToken) {
+                                handleAccessTokenLogin(accessToken);
+                            } else if (errorVal) {
+                                setError(errorVal);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         return () => {
             window.removeEventListener('message', handleMessage);
+            if (deepLinkListener) {
+                deepLinkListener.then(listener => {
+                    if (listener && typeof listener.remove === 'function') {
+                        listener.remove();
+                    }
+                });
+            }
         };
     }, []);
 
@@ -78,9 +110,11 @@ const AuthPage = () => {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1042784534726-25f01n88j0p6o2bphl9r7tbe99k4v27t.apps.googleusercontent.com';
         
         // Dynamically determine the redirect URI based on environment
-        const redirectUri = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5173/google-callback.html' 
-            : 'https://closetmate-n5l2.onrender.com/google-callback.html';
+        // On native mobile devices, always use the secure live Render callback address
+        // so that Safari can load it perfectly on the phone without "server not found" errors!
+        const redirectUri = (window.Capacitor || window.location.hostname !== 'localhost')
+            ? 'https://closetmate-n5l2.onrender.com/google-callback.html'
+            : 'http://localhost:5173/google-callback.html';
             
         const scope = 'openid email profile';
         const responseType = 'token';

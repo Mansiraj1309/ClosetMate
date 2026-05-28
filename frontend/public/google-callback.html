@@ -38,7 +38,6 @@
     <p style="color: #a1a1aa; font-size: 14px;">Please wait while we redirect you back to ClosetMate.</p>
 
     <script>
-        // Extract token from Google redirect hash
         const hash = window.location.hash;
         if (hash) {
             const params = new URLSearchParams(hash.substring(1));
@@ -46,22 +45,32 @@
             const error = params.get('error');
 
             if (accessToken) {
-                // Send token back to the parent window
                 if (window.opener) {
                     window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', accessToken }, '*');
+                    setTimeout(() => { window.close(); }, 500);
                 } else {
-                    // Fallback for full redirects where opener is not available
+                    // Save to local storage for standard browser tabs
                     localStorage.setItem('google_auth_access_token', accessToken);
+                    
+                    // Instantly trigger deep link back to the native app!
+                    window.location.href = 'closetmate://google-auth#' + hash.substring(1);
+                    
+                    // Fallback to home page after 2 seconds if deep link is not supported
+                    setTimeout(() => {
+                        window.location.href = window.location.origin + '/';
+                    }, 2000);
                 }
-                // Close the popup window
-                setTimeout(() => { window.close(); }, 500);
             } else if (error) {
                 if (window.opener) {
                     window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error }, '*');
+                    setTimeout(() => { window.close(); }, 500);
                 } else {
                     localStorage.setItem('google_auth_error', error);
+                    window.location.href = 'closetmate://google-auth#error=' + error;
+                    setTimeout(() => {
+                        window.location.href = window.location.origin + '/';
+                    }, 2000);
                 }
-                setTimeout(() => { window.close(); }, 500);
             }
         } else {
             document.body.innerHTML = "<h3>Error</h3><p style='color: #ef4444;'>No authentication details received from Google. Closing...</p>";
