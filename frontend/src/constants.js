@@ -6,6 +6,9 @@ export const CLOTHING_CATEGORIES = {
         Bottoms: [
             'Jeans', 'Trousers', 'Joggers', 'Cargo', 'Shorts', 'Chinos', 'Dhoti'
         ],
+        'Co-ord Sets': [
+            'Co-ord Set', 'Casual Co-ord Set', 'Ethnic Co-ord Set', 'Summer Co-ord Set'
+        ],
         'Ethnic Wear': [
             'Kurta Pajama', 'Sherwani', 'Nehru Jacket', 'Dhoti Set'
         ],
@@ -35,6 +38,9 @@ export const CLOTHING_CATEGORIES = {
         Dresses: [
             'Maxi Dress', 'Mini Dress', 'Bodycon', 'A-Line', 'Shift Dress', 'Evening Gown', 'Cocktail Dress', 'Midi Dress'
         ],
+        'Co-ord Sets': [
+            'Co-ord Set', 'Casual Co-ord Set', 'Ethnic Co-ord Set', 'Skirt Co-ord Set', 'Summer Co-ord Set'
+        ],
         'Ethnic Wear': [
             'Saree', 'Salwar Suit', 'Lehenga', 'Anarkali', 'Kurta Set', 'Dupatta', 'Blouse'
         ],
@@ -60,6 +66,7 @@ export const CLOTHING_CATEGORIES = {
     Unisex: {
         Tops: ['T-shirt', 'Hoodie', 'Sweatshirt', 'Shirt'],
         Bottoms: ['Jeans', 'Joggers', 'Cargo', 'Shorts'],
+        'Co-ord Sets': ['Co-ord Set', 'Casual Co-ord Set', 'Tie-Dye Co-ord Set'],
         'Loungewear': ['Night Suit', 'Pyjamas', 'Tracksuit'],
         Footwear: ['Sneakers', 'Boots', 'Sandals'],
         Accessories: ['Watch', 'Cap', 'Sunglasses', 'Backpack'],
