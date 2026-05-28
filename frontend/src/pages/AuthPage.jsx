@@ -91,8 +91,15 @@ const AuthPage = () => {
             });
         }
 
+        // 4. Focus listener to automatically reset loading state when returning back to the app
+        const handleFocus = () => {
+            setLoading(false);
+        };
+        window.addEventListener('focus', handleFocus);
+
         return () => {
             window.removeEventListener('message', handleMessage);
+            window.removeEventListener('focus', handleFocus);
             if (deepLinkListener) {
                 deepLinkListener.then(listener => {
                     if (listener && typeof listener.remove === 'function') {
