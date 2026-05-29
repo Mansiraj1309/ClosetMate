@@ -15,6 +15,8 @@ const GENDERS = ['Men', 'Women', 'Unisex'];
 const COLORS = ['Black', 'White', 'Blue', 'Red', 'Green', 'Beige', 'Brown', 'Grey', 'Navy', 'Pink', 'Yellow', 'Orange', 'Purple', 'Maroon', 'Olive', 'Teal'];
 const OCCASIONS = ['Casual', 'Office', 'Wedding', 'Date Night', 'Festival', 'Travel', 'Gym', 'College', 'Party'];
 
+const isNative = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
 // ── Component ─────────────────────────────────────────────────
 
 const INITIAL_FORM = {
@@ -230,6 +232,13 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     // ── Background removal helper ─────────────────────────────
     const handleRemoveBackground = async () => {
         if (!file) return;
+
+        if (isNative()) {
+            console.log('Skipping background removal on mobile native platform.');
+            setBgError('Background removal is not available on mobile devices due to device memory limits. Your original photo will be used.');
+            return;
+        }
+
         setIsRemovingBg(true);
         setBgError('');
         console.log('--- STARTING BACKGROUND REMOVAL ---');
@@ -574,6 +583,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                                 </button>
                             )}
 
+                            {bgError && (
+                                <div className="autotag-error" style={{ textAlign: 'center', marginTop: '0.5rem', color: '#f87171' }}>
+                                    ⚠️ {bgError}
+                                </div>
+                            )}
+
                             {file && bgRemoved && (
                                 <button type="button" className="bgremove-btn undo-btn" onClick={handleUndoRemoveBackground}>
                                     ↩️ Undo Clean Look (Use Original)
@@ -583,6 +598,12 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                         <button type="button" className="cta-button" onClick={handleAutoTagAndNext} disabled={!file || isRemovingBg || isAutoTagging}>
                             {isAutoTagging ? <><Loader size={18} className="spin" /> AI Analyzing...</> : <><Sparkles size={18} /> Next: AI Auto-Tag</>}
                         </button>
+
+                        {autoTagError && (
+                            <div className="autotag-error" style={{ textAlign: 'center', marginTop: '0.5rem', color: '#f87171' }}>
+                                ⚠️ {autoTagError}
+                            </div>
+                        )}
                     </div>
                 );
             case 2:
