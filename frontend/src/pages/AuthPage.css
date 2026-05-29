@@ -429,3 +429,112 @@
         transform: translateY(0);
     }
 }
+
+/* ── Google Gmail Modal ───────────────────────────── */
+.google-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.google-modal {
+    width: 100%;
+    max-width: 400px;
+    padding: 1.75rem;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: slideUp 0.25s ease;
+}
+
+.google-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.google-modal-logo {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.google-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.google-modal-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin: 0;
+    margin-top: 2px;
+}
+
+.google-modal-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.35rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.google-modal-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.google-account-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(129, 140, 248, 0.08);
+    border: 1px solid rgba(129, 140, 248, 0.18);
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+}
+
+.account-hint-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.account-hint-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.google-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.google-modal-note {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+    opacity: 0.8;
+}
