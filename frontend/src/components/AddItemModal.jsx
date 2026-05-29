@@ -397,18 +397,72 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
                         if (res.ok) {
                             const tags = await res.json();
                             console.log('AI Auto-tagging successfully returned tags:', tags);
-                            setFormData(prev => ({
-                                ...prev,
-                                category: tags.category || prev.category,
-                                type: tags.type || prev.type,
-                                color: COLORS.includes(tags.color) ? tags.color : (tags.color ? '__custom' : prev.color),
-                                customColor: COLORS.includes(tags.color) ? '' : (tags.color || ''),
-                                season: tags.season || prev.season,
-                                formality: tags.formality || prev.formality,
-                                style: tags.style || prev.style,
-                                occasions: tags.occasions || prev.occasions,
-                                styleNotes: tags.styleNotes || prev.styleNotes,
-                            }));
+                            setFormData(prev => {
+                                let matchedGender = prev.gender;
+                                let matchedCategory = prev.category;
+                                let matchedType = prev.type;
+                                let matchedColor = prev.color;
+                                let customColor = prev.customColor;
+
+                                // 1. Case-insensitive Gender match
+                                if (tags.gender) {
+                                    const foundGender = ['Men', 'Women', 'Unisex'].find(
+                                        g => g.toLowerCase() === tags.gender.toLowerCase()
+                                    );
+                                    if (foundGender) matchedGender = foundGender;
+                                }
+
+                                // 2. Case-insensitive Category match
+                                if (tags.category) {
+                                    const availableCategories = Object.keys(CLOTHING_CATEGORIES[matchedGender] || CLOTHING_CATEGORIES.Unisex);
+                                    const foundCategory = availableCategories.find(
+                                        c => c.toLowerCase() === tags.category.toLowerCase()
+                                    );
+                                    if (foundCategory) matchedCategory = foundCategory;
+                                }
+
+                                // 3. Case-insensitive Type match
+                                if (tags.type) {
+                                    const availableTypes = (CLOTHING_CATEGORIES[matchedGender] || CLOTHING_CATEGORIES.Unisex)[matchedCategory] || [];
+                                    const foundType = availableTypes.find(
+                                        t => t.toLowerCase() === tags.type.toLowerCase()
+                                    );
+                                    if (foundType) {
+                                        matchedType = foundType;
+                                    } else {
+                                        // Fallback formatting: capitalize first letter
+                                        matchedType = tags.type.charAt(0).toUpperCase() + tags.type.slice(1);
+                                    }
+                                }
+
+                                // 4. Case-insensitive Color match
+                                if (tags.color) {
+                                    const foundColor = COLORS.find(
+                                        c => c.toLowerCase() === tags.color.toLowerCase()
+                                    );
+                                    if (foundColor) {
+                                        matchedColor = foundColor;
+                                        customColor = '';
+                                    } else {
+                                        matchedColor = '__custom';
+                                        customColor = tags.color.charAt(0).toUpperCase() + tags.color.slice(1);
+                                    }
+                                }
+
+                                return {
+                                    ...prev,
+                                    gender: matchedGender,
+                                    category: matchedCategory,
+                                    type: matchedType,
+                                    color: matchedColor,
+                                    customColor: customColor,
+                                    season: tags.season || prev.season,
+                                    formality: tags.formality || prev.formality,
+                                    style: tags.style || prev.style,
+                                    occasions: tags.occasions || prev.occasions,
+                                    styleNotes: tags.styleNotes || prev.styleNotes,
+                                };
+                            });
                         } else {
                             const err = await res.json();
                             console.error('AI Auto-tagging server error:', err);
