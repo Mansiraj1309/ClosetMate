@@ -43,70 +43,47 @@ const AuthPage = () => {
         const handleMessage = (event) => {
             if (event.data && event.data.type === 'GOOGLE_AUTH_SUCCESS') {
                 const token = event.data.accessToken;
-                if (token) {
-                    handleAccessTokenLogin(token);
-                }
+                if (token) handleAccessTokenLogin(token);
             } else if (event.data && event.data.type === 'GOOGLE_AUTH_FAILURE') {
                 setError(event.data.error || 'Google Sign-In failed');
             }
         };
-
         window.addEventListener('message', handleMessage);
 
-        // 2. Full-page redirect storage listener fallback (e.g. mobile Safari/Chrome)
-        const token = localStorage.getItem('google_auth_access_token');
-        if (token) {
-            localStorage.removeItem('google_auth_access_token');
-            handleAccessTokenLogin(token);
+        // 2. ✅ Android/Mobile external browser redirect: token passed as ?gat= URL param
+        // This works cross-origin (onrender.com → vercel.app) unlike localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const gatToken = urlParams.get('gat');
+        const gerror = urlParams.get('gerror');
+
+        if (gatToken) {
+            // Clean the URL so reloading doesn't re-trigger login
+            window.history.replaceState({}, document.title, '/auth');
+            handleAccessTokenLogin(gatToken);
+        } else if (gerror) {
+            window.history.replaceState({}, document.title, '/auth');
+            setError(decodeURIComponent(gerror) || 'Google Sign-In failed');
+        } else {
+            // 3. Fallback: check localStorage (desktop same-origin popup fallback)
+            const lsToken = localStorage.getItem('google_auth_access_token');
+            if (lsToken) {
+                localStorage.removeItem('google_auth_access_token');
+                handleAccessTokenLogin(lsToken);
+            }
+            const lsError = localStorage.getItem('google_auth_error');
+            if (lsError) {
+                localStorage.removeItem('google_auth_error');
+                setError(lsError);
+            }
         }
 
-        const authError = localStorage.getItem('google_auth_error');
-        if (authError) {
-            localStorage.removeItem('google_auth_error');
-            setError(authError);
-        }
-
-        // 3. Listen for Capacitor native deep links (custom URL scheme launches)
-        let deepLinkListener = null;
-        if (window.Capacitor) {
-            import('@capacitor/app').then(({ App }) => {
-                deepLinkListener = App.addListener('appUrlOpen', (event) => {
-                    const url = event.url;
-                    if (url && url.includes('closetmate://google-auth')) {
-                        const hashIndex = url.indexOf('#');
-                        if (hashIndex !== -1) {
-                            const hash = url.substring(hashIndex + 1);
-                            const params = new URLSearchParams(hash);
-                            const accessToken = params.get('access_token');
-                            const errorVal = params.get('error');
-                            
-                            if (accessToken) {
-                                handleAccessTokenLogin(accessToken);
-                            } else if (errorVal) {
-                                setError(errorVal);
-                            }
-                        }
-                    }
-                });
-            });
-        }
-
-        // 4. Focus listener to automatically reset loading state when returning back to the app
-        const handleFocus = () => {
-            setLoading(false);
-        };
+        // 4. Focus listener to reset loading state when user returns to app tab
+        const handleFocus = () => { setLoading(false); };
         window.addEventListener('focus', handleFocus);
 
         return () => {
             window.removeEventListener('message', handleMessage);
             window.removeEventListener('focus', handleFocus);
-            if (deepLinkListener) {
-                deepLinkListener.then(listener => {
-                    if (listener && typeof listener.remove === 'function') {
-                        listener.remove();
-                    }
-                });
-            }
         };
     }, []);
 

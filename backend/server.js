@@ -123,19 +123,17 @@ app.get('/google-callback.html', (req, res) => {
                     window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', accessToken: accessToken }, '*');
                     setTimeout(function() { window.close(); }, 500);
                 } else {
-                    // ✅ Mobile full-page redirect flow (Android/iOS browser)
-                    // Save token to localStorage, then go back to frontend /auth route
-                    // The frontend useEffect will pick up 'google_auth_access_token' on load
-                    try { localStorage.setItem('google_auth_access_token', accessToken); } catch(e) {}
-                    window.location.replace('https://closet-mate.vercel.app/auth');
+                    // ✅ Mobile full-page redirect flow (Android/iOS external browser)
+                    // Pass token as a URL query parameter — localStorage is cross-origin blocked
+                    // The frontend reads ?gat= on load and processes the login
+                    window.location.replace('https://closet-mate.vercel.app/auth?gat=' + encodeURIComponent(accessToken));
                 }
             } else if (error) {
                 if (window.opener && !window.opener.closed) {
                     window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error: error }, '*');
                     setTimeout(function() { window.close(); }, 500);
                 } else {
-                    try { localStorage.setItem('google_auth_error', error); } catch(e) {}
-                    window.location.replace('https://closet-mate.vercel.app/auth');
+                    window.location.replace('https://closet-mate.vercel.app/auth?gerror=' + encodeURIComponent(error));
                 }
             } else {
                 setTimeout(function() {
