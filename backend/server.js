@@ -63,71 +63,86 @@ app.get('/google-callback.html', (req, res) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authenticating with Google...</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #121214;
+            background: linear-gradient(135deg, #0d0f1a 0%, #1a1035 100%);
             color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
             text-align: center;
+            padding: 20px;
         }
+        .logo { font-size: 2rem; margin-bottom: 16px; }
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.1);
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            border-left-color: #6366f1;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            border-left-color: #8b5cf6;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 24px;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        h3 { font-size: 1.2rem; margin-bottom: 8px; }
+        p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
     </style>
 </head>
 <body>
+    <div class="logo">✨</div>
     <div class="spinner"></div>
-    <h3>Connecting your Google Account...</h3>
-    <p style="color: #a1a1aa; font-size: 14px;">Please wait while we redirect you back to ClosetMate.</p>
+    <h3>Signing you in...</h3>
+    <p>Please wait, redirecting back to ClosetMate.</p>
 
     <script>
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const accessToken = params.get('access_token');
-            const error = params.get('error');
+        (function() {
+            var hash = window.location.hash;
+            if (!hash || hash.length <= 1) {
+                // No hash — cancelled or error before redirect
+                document.querySelector('h3').textContent = 'Sign-in cancelled';
+                document.querySelector('p').textContent = 'Redirecting back to ClosetMate...';
+                setTimeout(function() {
+                    window.location.replace('https://closet-mate.vercel.app/auth');
+                }, 1500);
+                return;
+            }
+
+            var params = new URLSearchParams(hash.substring(1));
+            var accessToken = params.get('access_token');
+            var error = params.get('error');
 
             if (accessToken) {
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', accessToken }, '*');
-                    setTimeout(() => { window.close(); }, 500);
+                if (window.opener && !window.opener.closed) {
+                    // ✅ Desktop popup flow — post message to parent tab and close
+                    window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', accessToken: accessToken }, '*');
+                    setTimeout(function() { window.close(); }, 500);
                 } else {
-                    localStorage.setItem('google_auth_access_token', accessToken);
-                    window.location.href = 'closetmate://google-auth#' + hash.substring(1);
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
+                    // ✅ Mobile full-page redirect flow (Android/iOS browser)
+                    // Save token to localStorage, then go back to frontend /auth route
+                    // The frontend useEffect will pick up 'google_auth_access_token' on load
+                    try { localStorage.setItem('google_auth_access_token', accessToken); } catch(e) {}
+                    window.location.replace('https://closet-mate.vercel.app/auth');
                 }
             } else if (error) {
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error }, '*');
-                    setTimeout(() => { window.close(); }, 500);
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error: error }, '*');
+                    setTimeout(function() { window.close(); }, 500);
                 } else {
-                    localStorage.setItem('google_auth_error', error);
-                    window.location.href = 'closetmate://google-auth#error=' + error;
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
+                    try { localStorage.setItem('google_auth_error', error); } catch(e) {}
+                    window.location.replace('https://closet-mate.vercel.app/auth');
                 }
+            } else {
+                setTimeout(function() {
+                    window.location.replace('https://closet-mate.vercel.app/auth');
+                }, 1500);
             }
-        } else {
-            document.body.innerHTML = "<h3>Error</h3><p style='color: #ef4444;'>No authentication details received from Google. Closing...</p>";
-        }
+        })();
     </script>
 </body>
 </html>`);
