@@ -4,4 +4,5 @@
     <string name="title_activity_main">ClosetMate</string>
     <string name="package_name">com.closetmate.app</string>
     <string name="custom_url_scheme">com.closetmate.app</string>
+    <string name="server_client_id">1044175339595-gptets0htodu6uq5u568p1l2v5gjnoks.apps.googleusercontent.com</string>
 </resources>

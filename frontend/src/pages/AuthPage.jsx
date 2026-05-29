@@ -3,6 +3,9 @@ import { Sparkles, Mail, Lock, User, ArrowRight, Loader, X as XIcon } from 'luci
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
+// Detect if running inside a Capacitor native app (Android / iOS)
+const isNative = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
 const AuthPage = () => {
     const { login, register, googleLogin } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
@@ -12,14 +15,13 @@ const AuthPage = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // ── Google Gmail Modal state ──────────────────────────────────────────
+    // Gmail modal (web fallback)
     const [showGoogleModal, setShowGoogleModal] = useState(false);
     const [gmailInput, setGmailInput] = useState('');
     const [gmailError, setGmailError] = useState('');
     const [gmailLoading, setGmailLoading] = useState(false);
 
-    // ── Handlers ──────────────────────────────────────────────────────────
-
+    // ── Email / Password ──────────────────────────────────────────────────
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -38,6 +40,45 @@ const AuthPage = () => {
         }
     };
 
+    // ── Native Google Sign-In (Android & iOS) ─────────────────────────────
+    const handleNativeGoogleSignIn = async () => {
+        setError('');
+        setLoading(true);
+        try {
+            // Dynamically import to avoid build errors on web
+            const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+
+            // Initialize (safe to call multiple times)
+            await GoogleAuth.initialize({
+                clientId: '1044175339595-gptets0htodu6uq5u568p1l2v5gjnoks.apps.googleusercontent.com',
+                scopes: ['profile', 'email'],
+                grantOfflineAccess: false,
+            });
+
+            const user = await GoogleAuth.signIn();
+
+            const gEmail = user?.email || user?.authentication?.idToken;
+            const gName  = user?.name  || user?.displayName || 'Google User';
+
+            if (!user?.email) {
+                throw new Error('Could not retrieve email from Google. Please try again.');
+            }
+
+            await googleLogin(gName, user.email);
+        } catch (err) {
+            if (err?.message?.includes('cancelled') || err?.message?.includes('cancel') || err?.code === '12501') {
+                // User cancelled — no error message needed
+                setLoading(false);
+                return;
+            }
+            console.error('Native Google Sign-In error:', err);
+            setError(err.message || 'Google Sign-In failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ── Web Gmail Modal (browser fallback) ───────────────────────────────
     const openGoogleModal = () => {
         setGmailInput('');
         setGmailError('');
@@ -54,25 +95,14 @@ const AuthPage = () => {
     const handleGmailSubmit = async (e) => {
         e.preventDefault();
         const trimmed = gmailInput.trim().toLowerCase();
-
-        if (!trimmed) {
-            setGmailError('Please enter your Gmail address.');
-            return;
-        }
-        if (!trimmed.includes('@')) {
-            setGmailError('Please enter a valid email address.');
-            return;
-        }
+        if (!trimmed) { setGmailError('Please enter your Gmail address.'); return; }
+        if (!trimmed.includes('@')) { setGmailError('Please enter a valid email address.'); return; }
 
         setGmailError('');
         setGmailLoading(true);
         try {
-            // Derive a display name from the email (e.g. john.doe@gmail.com → John Doe)
             const localPart = trimmed.split('@')[0];
-            const derivedName = localPart
-                .replace(/[._-]/g, ' ')
-                .replace(/\b\w/g, c => c.toUpperCase());
-
+            const derivedName = localPart.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
             await googleLogin(derivedName, trimmed);
             setShowGoogleModal(false);
         } catch (err) {
@@ -82,19 +112,24 @@ const AuthPage = () => {
         }
     };
 
+    // Route the button to native or web handler
+    const handleGoogleBtn = () => {
+        if (isNative()) {
+            handleNativeGoogleSignIn();
+        } else {
+            openGoogleModal();
+        }
+    };
+
     // ── Render ─────────────────────────────────────────────────────────────
     return (
         <div className="auth-page">
             <div className="auth-ambient-glow"></div>
 
-            {/* ── Google Gmail Modal ───────────────────────────────── */}
+            {/* ── Web Gmail Modal (shown only on browsers) ─────────────── */}
             {showGoogleModal && (
                 <div className="google-modal-overlay" onClick={closeGoogleModal}>
-                    <div
-                        className="google-modal glass-card"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Modal header */}
+                    <div className="google-modal glass-card" onClick={e => e.stopPropagation()}>
                         <div className="google-modal-header">
                             <svg viewBox="0 0 24 24" className="google-modal-logo">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -111,13 +146,11 @@ const AuthPage = () => {
                             </button>
                         </div>
 
-                        {/* Account chips — visual hints */}
                         <div className="google-account-hint">
                             <span className="account-hint-icon">✉️</span>
                             <span className="account-hint-text">Use your existing Google / Gmail account</span>
                         </div>
 
-                        {/* Email input form */}
                         <form onSubmit={handleGmailSubmit} className="google-modal-form">
                             <div className="input-group">
                                 <Mail size={18} className="input-icon" />
@@ -132,20 +165,9 @@ const AuthPage = () => {
                                     inputMode="email"
                                 />
                             </div>
-
-                            {gmailError && (
-                                <div className="auth-error">{gmailError}</div>
-                            )}
-
-                            <button
-                                type="submit"
-                                className="cta-button auth-submit"
-                                disabled={gmailLoading || !gmailInput.trim()}
-                            >
-                                {gmailLoading
-                                    ? <Loader className="spin" size={20} />
-                                    : <><span>Continue</span><ArrowRight size={18} /></>
-                                }
+                            {gmailError && <div className="auth-error">{gmailError}</div>}
+                            <button type="submit" className="cta-button auth-submit" disabled={gmailLoading || !gmailInput.trim()}>
+                                {gmailLoading ? <Loader className="spin" size={20} /> : <><span>Continue</span><ArrowRight size={18} /></>}
                             </button>
                         </form>
 
@@ -165,18 +187,11 @@ const AuthPage = () => {
                 </div>
 
                 <div className="auth-card glass-card">
-                    {/* Tab Switcher */}
                     <div className="auth-tabs">
-                        <button
-                            className={`auth-tab ${isLogin ? 'active' : ''}`}
-                            onClick={() => { setIsLogin(true); setError(''); }}
-                        >
+                        <button className={`auth-tab ${isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(true); setError(''); }}>
                             Sign In
                         </button>
-                        <button
-                            className={`auth-tab ${!isLogin ? 'active' : ''}`}
-                            onClick={() => { setIsLogin(false); setError(''); }}
-                        >
+                        <button className={`auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); }}>
                             Create Account
                         </button>
                     </div>
@@ -185,58 +200,27 @@ const AuthPage = () => {
                         {!isLogin && (
                             <div className="input-group">
                                 <User size={18} className="input-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Full Name"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    disabled={loading}
-                                />
+                                <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} disabled={loading} />
                             </div>
                         )}
-
                         <div className="input-group">
                             <Mail size={18} className="input-icon" />
-                            <input
-                                type="email"
-                                placeholder="Email Address"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                required
-                                disabled={loading}
-                            />
+                            <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
                         </div>
-
                         <div className="input-group">
                             <Lock size={18} className="input-icon" />
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                disabled={loading}
-                            />
+                            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading} />
                         </div>
 
                         {error && <div className="auth-error">{error}</div>}
 
                         <button type="submit" className="cta-button auth-submit" disabled={loading}>
-                            {loading
-                                ? <Loader className="spin" size={20} />
-                                : <>{isLogin ? 'Sign In' : 'Create Account'} <ArrowRight size={18} /></>
-                            }
+                            {loading ? <Loader className="spin" size={20} /> : <>{isLogin ? 'Sign In' : 'Create Account'} <ArrowRight size={18} /></>}
                         </button>
 
                         <div className="google-divider">OR</div>
 
-                        <button
-                            type="button"
-                            className="google-btn"
-                            onClick={openGoogleModal}
-                            disabled={loading}
-                        >
+                        <button type="button" className="google-btn" onClick={handleGoogleBtn} disabled={loading}>
                             <svg viewBox="0 0 24 24" className="google-logo">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -249,10 +233,7 @@ const AuthPage = () => {
 
                     <p className="auth-footer">
                         {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-                        <button
-                            className="auth-switch-btn"
-                            onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                        >
+                        <button className="auth-switch-btn" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
                             {isLogin ? 'Sign up' : 'Sign in'}
                         </button>
                     </p>
