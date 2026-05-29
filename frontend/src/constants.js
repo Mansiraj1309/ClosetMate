@@ -51,7 +51,7 @@ export const CLOTHING_CATEGORIES = {
             'Heels', 'Flats', 'Sneakers', 'Sandals', 'Ethnic Footwear', 'Boots'
         ],
         Accessories: [
-            'Handbag', 'Clutch', 'Sunglasses', 'Scarf', 'Hair Accessories', 'Belt'
+            'Watch', 'Handbag', 'Clutch', 'Sunglasses', 'Scarf', 'Hair Accessories', 'Belt', 'Wallet'
         ],
         Jewelry: [
             'Earrings', 'Necklace', 'Rings', 'Bracelet', 'Bangles', 'Anklets', 'Nose Ring'
@@ -69,7 +69,7 @@ export const CLOTHING_CATEGORIES = {
         'Co-ord Sets': ['Co-ord Set', 'Casual Co-ord Set', 'Tie-Dye Co-ord Set'],
         'Loungewear': ['Night Suit', 'Pyjamas', 'Tracksuit'],
         Footwear: ['Sneakers', 'Boots', 'Sandals'],
-        Accessories: ['Watch', 'Cap', 'Sunglasses', 'Backpack'],
+        Accessories: ['Watch', 'Cap', 'Sunglasses', 'Backpack', 'Belt', 'Wallet', 'Scarf'],
         Outerwear: ['Jacket', 'Coat', 'Denim Jacket'],
         Activewear: ['Track Pants', 'Running Shoes']
     }

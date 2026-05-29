@@ -184,23 +184,45 @@ router.post('/analyze-image', auth, async (req, res) => {
         if (!imageBase64 || !mimeType) {
             return res.status(400).json({ message: 'imageBase64 and mimeType are required' });
         }
+        const prompt = `You are an expert fashion AI. Carefully analyze this clothing/accessory image and return accurate metadata.
 
-        const prompt = `You are a premium fashion AI stylist. Analyze this clothing image and return structured metadata.
-
-Return ONLY a raw JSON object with EXACTLY these fields:
+Return ONLY a raw JSON object with EXACTLY these fields (no markdown, no extra text):
 {
   "gender": "Men", "Women" or "Unisex",
-  "category": One of ["Tops", "Bottoms", "Dresses", "Loungewear", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
-  "type": Specific type from the category (e.g., "Oversized T-shirt", "Palazzo", "Saree", "Heels", "Kurta Pajama"),
-  "color": Primary color name (Prefer standard colors: "Black", "White", "Blue", "Red", "Green", "Beige", "Brown", "Grey", "Navy", "Pink", "Yellow", "Orange", "Purple", "Maroon", "Olive", "Teal". If it is a distinct shade, use that shade, e.g. "Burgundy", "Peach", "Mint Green", "Rust"),
+  "category": One of ["Tops", "Bottoms", "Dresses", "Co-ord Sets", "Loungewear", "Ethnic Wear", "Footwear", "Accessories", "Jewelry", "Outerwear", "Activewear"],
+  "type": Specific type within the category (see examples below),
+  "color": Primary color name,
   "season": One of ["Summer", "Winter", "Rainy", "All Season"],
   "formality": One of ["Casual", "Semi-Formal", "Formal", "Party", "Ethnic", "Sporty"],
   "style": One of ["Minimal", "Streetwear", "Classic", "Bohemian", "Gothic", "Sporty", "Vintage", "Chic"],
-  "occasions": Array of ["Casual", "Office", "Wedding", "Date Night", "Festival", "Travel", "Gym", "College", "Party"],
-  "styleNotes": A single premium styling tip (e.g., "Pairs perfectly with high-waisted trousers for a chic office look.")
+  "occasions": Array chosen from ["Casual", "Office", "Wedding", "Date Night", "Festival", "Travel", "Gym", "College", "Party"],
+  "styleNotes": One specific premium styling tip for this item
 }
 
-Be specific and accurate. Pay close attention to colors and textures. Make sure you don't confuse dark colors like Burgundy, Maroon, Navy Blue, or Dark Green with Black. If it's a specific Indian ethnic wear, identify it correctly (e.g., "Sherwani", "Anarkali").`;
+GENDER RULES (follow strictly):
+- If the item is clearly cut/designed for women (crop top, kurti, saree, lehenga, heels, skirt, dress, bangles, clutch, handbag, blouse) → "Women"
+- If the item is clearly designed for men (kurta pajama, sherwani, dhoti, polo shirt, chinos, men's blazer) → "Men"
+- Only use "Unisex" for truly gender-neutral items like plain t-shirts, hoodies, sneakers, caps, backpacks, sunglasses, watches, basic jeans
+
+CATEGORY & TYPE examples:
+- Tops: T-shirt, Oversized T-shirt, Shirt, Polo, Hoodie, Sweater, Crop Top, Blouse, Kurti, Tank Top, Kurta, Sweatshirt
+- Bottoms: Jeans, Trousers, Joggers, Cargo, Shorts, Palazzo, Leggings, Skirt, Chinos, Sharara, Salwar
+- Dresses: Maxi Dress, Mini Dress, Bodycon, A-Line, Shift Dress, Evening Gown, Midi Dress
+- Co-ord Sets: Co-ord Set, Casual Co-ord Set, Ethnic Co-ord Set, Skirt Co-ord Set
+- Loungewear: Night Suit, Pyjamas, Nighty, Tracksuit, Bathrobe
+- Ethnic Wear: Saree, Salwar Suit, Lehenga, Anarkali, Kurta Set, Kurta Pajama, Sherwani, Nehru Jacket, Dupatta
+- Footwear: Sneakers, Heels, Flats, Formal Shoes, Loafers, Boots, Sandals, Slippers, Ethnic Footwear
+- Accessories: Watch, Belt, Cap, Sunglasses, Handbag, Clutch, Backpack, Scarf, Wallet, Hair Accessories
+- Jewelry: Earrings, Necklace, Chain, Bracelet, Bangles, Ring, Anklets, Nose Ring
+- Outerwear: Blazer, Jacket, Coat, Shrug, Cardigan, Denim Jacket
+- Activewear: Gym Wear, Sports Bra, Track Pants, Running Shoes
+
+COLOR RULES:
+- Look at the actual dominant color carefully. Do NOT say "Black" for dark navy, burgundy, or maroon.
+- Prefer: "Black", "White", "Blue", "Red", "Green", "Beige", "Brown", "Grey", "Navy", "Pink", "Yellow", "Orange", "Purple", "Maroon", "Olive", "Teal"
+- For distinct shades use: "Burgundy", "Peach", "Mint Green", "Rust", "Lavender", "Mustard", "Coral", "Cream", "Ivory", "Charcoal"
+
+Be specific and accurate. A watch → category: Accessories, type: Watch. Never leave type as a generic category name.`;
 
         let result;
         let attempts = 0;
