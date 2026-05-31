@@ -112,12 +112,96 @@ const AuthPage = () => {
         }
     };
 
+    // ── Web Google Sign-In Popup ──────────────────────────────────────────
+    const handleWebGoogleSignIn = () => {
+        setError('');
+        setLoading(true);
+
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1044175339595-gptets0htodu6uq5u568p1l2v5gjnoks.apps.googleusercontent.com';
+        const redirectUri = window.location.origin;
+        const scope = 'openid email profile';
+        const responseType = 'token';
+        
+        // Build Google OAuth2 authorization URL
+        // Using prompt=select_account forces Google to show their active account chooser list
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&prompt=select_account`;
+        
+        // Center the popup window on screen
+        const width = 500;
+        const height = 650;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        const popup = window.open(
+            authUrl,
+            'GoogleSignIn',
+            `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,status=no,location=no`
+        );
+        
+        if (!popup) {
+            setError('Popup blocked! Please allow popups for this site to sign in with Google.');
+            setLoading(false);
+            return;
+        }
+        
+        const checkPopupInterval = setInterval(async () => {
+            if (!popup || popup.closed) {
+                clearInterval(checkPopupInterval);
+                setLoading(false);
+                return;
+            }
+            
+            try {
+                // Check if popup has redirected back to our origin
+                const popupUrl = popup.location.href;
+                
+                if (popupUrl && popupUrl.startsWith(redirectUri)) {
+                    clearInterval(checkPopupInterval);
+                    const hash = popup.location.hash;
+                    popup.close();
+                    
+                    if (hash) {
+                        const params = new URLSearchParams(hash.substring(1));
+                        const accessToken = params.get('access_token');
+                        
+                        if (accessToken) {
+                            // Fetch real user info from Google's userinfo API
+                            const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+                            if (!response.ok) throw new Error('Failed to fetch profile details from Google');
+                            
+                            const profileData = await response.json();
+                            const { name: gName, email: gEmail } = profileData;
+                            
+                            if (gEmail) {
+                                // Authenticate / register via our backend
+                                await googleLogin(gName || 'Google User', gEmail);
+                            } else {
+                                throw new Error('No email address returned from Google account');
+                            }
+                        } else {
+                            throw new Error('Google Sign-In failed to retrieve token.');
+                        }
+                    } else {
+                        throw new Error('Failed to retrieve authentication token from Google.');
+                    }
+                }
+            } catch (err) {
+                // Cross-origin exceptions are expected until Google redirects back to our origin.
+                if (err.name && err.name !== 'SecurityError' && !err.message.includes('Permission denied') && !err.message.includes('Block a frame')) {
+                    clearInterval(checkPopupInterval);
+                    setError(err.message);
+                    setLoading(false);
+                }
+            }
+        }, 500);
+    };
+
     // Route the button to native or web handler
     const handleGoogleBtn = () => {
         if (isNative()) {
             handleNativeGoogleSignIn();
         } else {
-            openGoogleModal();
+            handleWebGoogleSignIn();
         }
     };
 
@@ -230,18 +314,16 @@ const AuthPage = () => {
                             Continue with Google
                         </button>
 
-                        {isNative() && (
-                            <div style={{ textAlign: 'center', marginTop: '0.8rem' }}>
-                                <button 
-                                    type="button" 
-                                    className="auth-switch-btn" 
-                                    onClick={openGoogleModal}
-                                    style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
-                                >
-                                    🔑 Having issues? Sign in manually with Gmail
-                                </button>
-                            </div>
-                        )}
+                        <div style={{ textAlign: 'center', marginTop: '0.8rem' }}>
+                            <button 
+                                type="button" 
+                                className="auth-switch-btn" 
+                                onClick={openGoogleModal}
+                                style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                            >
+                                🔑 Having issues? Sign in manually with Gmail
+                            </button>
+                        </div>
                     </form>
 
                     <p className="auth-footer">
