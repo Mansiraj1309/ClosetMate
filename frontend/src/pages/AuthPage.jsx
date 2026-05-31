@@ -229,6 +229,19 @@ const AuthPage = () => {
                             </svg>
                             Continue with Google
                         </button>
+
+                        {isNative() && (
+                            <div style={{ textAlign: 'center', marginTop: '0.8rem' }}>
+                                <button 
+                                    type="button" 
+                                    className="auth-switch-btn" 
+                                    onClick={openGoogleModal}
+                                    style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                                >
+                                    🔑 Having issues? Sign in manually with Gmail
+                                </button>
+                            </div>
+                        )}
                     </form>
 
                     <p className="auth-footer">
