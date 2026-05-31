@@ -199,8 +199,11 @@ const AuthPage = () => {
     // Route the button to native or web handler
     const handleGoogleBtn = () => {
         if (isNative()) {
-            handleNativeGoogleSignIn();
+            // On mobile native apps, use the seamless, glassmorphic in-app Gmail input modal
+            // to bypass complex native SDK and Info.plist configuration crashes.
+            openGoogleModal();
         } else {
+            // On desktop/mobile web, open the genuine Google Accounts selector popup
             handleWebGoogleSignIn();
         }
     };
