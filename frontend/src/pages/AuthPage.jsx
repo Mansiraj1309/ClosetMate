@@ -48,9 +48,14 @@ const AuthPage = () => {
             // Dynamically import to avoid build errors on web
             const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
 
+            const platform = window.Capacitor?.getPlatform() || 'web';
+            const iosClientId = '1044175339595-8fkaen8fdchjps04quvd8kgnehj08r7h.apps.googleusercontent.com';
+            const webClientId = '1044175339595-gptets0htodu6uq5u568p1l2v5gjnoks.apps.googleusercontent.com';
+            const activeClientId = platform === 'ios' ? iosClientId : webClientId;
+
             // Initialize (safe to call multiple times)
             await GoogleAuth.initialize({
-                clientId: '1044175339595-gptets0htodu6uq5u568p1l2v5gjnoks.apps.googleusercontent.com',
+                clientId: activeClientId,
                 scopes: ['profile', 'email'],
                 grantOfflineAccess: false,
             });
@@ -72,7 +77,12 @@ const AuthPage = () => {
                 return;
             }
             console.error('Native Google Sign-In error:', err);
-            setError(err.message || 'Google Sign-In failed. Please try again.');
+            setError('Google Sign-In configuration error. Opening manual fallback.');
+            
+            // Graceful fallback: Open manual input modal if native SDK fails
+            setTimeout(() => {
+                openGoogleModal();
+            }, 1000);
         } finally {
             setLoading(false);
         }
@@ -199,9 +209,7 @@ const AuthPage = () => {
     // Route the button to native or web handler
     const handleGoogleBtn = () => {
         if (isNative()) {
-            // On mobile native apps, use the seamless, glassmorphic in-app Gmail input modal
-            // to bypass complex native SDK and Info.plist configuration crashes.
-            openGoogleModal();
+            handleNativeGoogleSignIn();
         } else {
             // On desktop/mobile web, open the genuine Google Accounts selector popup
             handleWebGoogleSignIn();
