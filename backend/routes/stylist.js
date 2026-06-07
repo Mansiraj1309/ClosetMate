@@ -6,25 +6,37 @@ const { GoogleGenAI } = require('@google/genai'); // ✅ FIXED: use new SDK, not
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Helper: call Gemini with retry on rate limit
-const callGemini = async (prompt, model = 'gemini-2.5-flash') => {
-    const maxAttempts = 3;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-            const response = await ai.models.generateContent({
-                model,
-                contents: [{ parts: [{ text: prompt }] }],
-            });
-            return response.text;
-        } catch (err) {
-            if ((err.status === 429 || err.code === 429) && attempt < maxAttempts - 1) {
-                console.log(`Rate limited. Retry attempt ${attempt + 1}...`);
-                await new Promise(resolve => setTimeout(resolve, 5000));
-            } else {
-                throw err;
+// Model fallback chain — if primary model fails, try the next
+const MODEL_CHAIN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+// Helper: call Gemini with retry on rate limit + automatic model fallback
+const callGemini = async (prompt) => {
+    const maxAttempts = 2;
+    for (const model of MODEL_CHAIN) {
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                console.log(`Calling Gemini model: ${model} (attempt ${attempt + 1})`);
+                const response = await ai.models.generateContent({
+                    model,
+                    contents: [{ parts: [{ text: prompt }] }],
+                });
+                return response.text;
+            } catch (err) {
+                const isRetryable = err.status === 429 || err.code === 429;
+                const isBlocked = err.status === 403 || err.status === 400;
+                if (isRetryable && attempt < maxAttempts - 1) {
+                    console.log(`Rate limited on ${model}. Retry ${attempt + 1}...`);
+                    await new Promise(resolve => setTimeout(resolve, 4000));
+                } else if (isBlocked || (isRetryable && attempt === maxAttempts - 1)) {
+                    console.log(`Model ${model} failed (${err.status}), trying next model...`);
+                    break; // try next model in chain
+                } else {
+                    throw err;
+                }
             }
         }
     }
+    throw new Error('All Gemini models failed. Please try again later.');
 };
 
 // @route   POST /api/stylist/recommend
