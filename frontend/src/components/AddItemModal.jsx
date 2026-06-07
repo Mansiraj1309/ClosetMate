@@ -3,8 +3,6 @@ import API_BASE from '../api';
 import { Upload, X, Sparkles, Loader, Image, CheckCircle, Camera } from 'lucide-react';
 import './AddItemModal.css';
 
-// @imgly/background-removal is now installed locally (no CDN needed)
-import { removeBackground } from '@imgly/background-removal';
 import heic2any from 'heic2any';
 
 import { CLOTHING_CATEGORIES, FORMALITY_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS } from '../constants';
@@ -233,41 +231,39 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
     const handleRemoveBackground = async () => {
         if (!file) return;
 
-        if (isNative()) {
-            console.log('Skipping background removal on mobile native platform.');
-            setBgError('Background removal is not available on mobile devices due to device memory limits. Your original photo will be used.');
-            return;
-        }
-
         setIsRemovingBg(true);
         setBgError('');
-        console.log('--- STARTING BACKGROUND REMOVAL ---');
+        console.log('--- STARTING BACKEND BACKGROUND REMOVAL ---');
         console.log('Original file:', file.name, 'size:', file.size, 'type:', file.type);
         try {
-            // 1. Resize image to maximum 1024px to speed up CPU inference and prevent OOM
+            // 1. Resize image to maximum 1024px to speed up network transfer and prevent backend OOM
             const resizedFile = await resizeImage(file, 1024);
             console.log('Resized image successfully:', resizedFile.size);
 
-            // Load the original uncorrupted resized image in memory to get rich colors
-            const originalImg = new window.Image();
-            const originalUrl = URL.createObjectURL(resizedFile);
-            originalImg.src = originalUrl;
-            await new Promise((resolve) => {
-                originalImg.onload = resolve;
-                originalImg.onerror = () => resolve(); // Handle gracefully
+            // 2. Send the image to the backend endpoint for processing
+            const payload = new FormData();
+            payload.append('image', resizedFile);
+
+            console.log('Sending request to backend background removal endpoint...');
+            const res = await fetch(`${API_BASE}/api/wardrobe/remove-background`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: payload,
             });
 
-            // 2. Run background removal using CPU to prevent iOS/Safari WebGL color corruption/inversion bugs
-            console.log('Running background removal on CPU...');
-            const blob = await removeBackground(resizedFile, {
-                model: 'medium',
-                device: 'cpu',
-            });
-            console.log('Finished background removal. Output size:', blob.size);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || `Server responded with status ${res.status}`);
+            }
 
-            // 3. Load the cutout PNG (which has the correct shape mask, but buggy colors in Safari)
+            const resultBlob = await res.blob();
+            console.log('Received processed image from backend. Size:', resultBlob.size);
+
+            // 3. Load the cutout PNG
             const cutoutImg = new window.Image();
-            const objectUrl = URL.createObjectURL(blob);
+            const objectUrl = URL.createObjectURL(resultBlob);
             cutoutImg.src = objectUrl;
             await new Promise((resolve) => {
                 cutoutImg.onload = resolve;
@@ -275,14 +271,11 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             });
 
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = cutoutImg.naturalWidth || originalImg.naturalWidth || 500;
-            tempCanvas.height = cutoutImg.naturalHeight || originalImg.naturalHeight || 500;
+            tempCanvas.width = cutoutImg.naturalWidth || 500;
+            tempCanvas.height = cutoutImg.naturalHeight || 500;
             const tempCtx = tempCanvas.getContext('2d');
-
-            // Draw the transparent cutout first (gets the correct alpha/shape mask from background remover)
             tempCtx.drawImage(cutoutImg, 0, 0, tempCanvas.width, tempCanvas.height);
 
-            // ── Alpha Channel Restoration to binarize and bypass Safari float32 bugs ──
             const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             const data = imgData.data;
             let opaquePixels = 0;
@@ -290,27 +283,15 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
 
             for (let i = 0; i < data.length; i += 4) {
                 const alpha = data[i + 3];
-                if (alpha > 15) { // If pixel is part of the clothing foreground
+                if (alpha > 15) {
                     opaquePixels++;
-                    data[i + 3] = 255; // Set mask alpha to fully opaque
-                } else {
-                    data[i + 3] = 0; // Set mask background to fully transparent
                 }
             }
-            tempCtx.putImageData(imgData, 0, 0);
 
-            // ── Mask the original uncorrupted rich-color image using our restored alpha mask! ──
-            // Use 'source-in' composite mode: keeps originalImg only where tempCanvas has opaque pixels (our shape mask)
-            tempCtx.globalCompositeOperation = 'source-in';
-            tempCtx.drawImage(originalImg, 0, 0, tempCanvas.width, tempCanvas.height);
-            tempCtx.globalCompositeOperation = 'source-over'; // Reset to default
-
-            // Revoke URLs to free memory
             URL.revokeObjectURL(objectUrl);
-            URL.revokeObjectURL(originalUrl);
 
             const opaqueRatio = opaquePixels / totalPixels;
-            console.log('Cutout opacity ratio after Safari alpha mask extraction:', opaqueRatio);
+            console.log('Cutout opacity ratio:', opaqueRatio);
 
             // 4. Smart blank-detection: if less than 1.5% of pixels are opaque,
             // the model over-erased the item. Fall back gracefully to original photo.

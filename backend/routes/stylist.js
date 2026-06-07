@@ -7,7 +7,7 @@ const { GoogleGenAI } = require('@google/genai'); // ✅ FIXED: use new SDK, not
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Helper: call Gemini with retry on rate limit
-const callGemini = async (prompt, model = 'gemini-2.5-pro') => {
+const callGemini = async (prompt, model = 'gemini-2.5-flash') => {
     const maxAttempts = 3;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         try {
@@ -140,7 +140,10 @@ Rules:
 
     } catch (err) {
         console.error('AI Stylist Error:', err);
-        res.status(500).json({ message: 'AI model is currently busy or rate-limited (Free Tier). Please wait 30 seconds and try again.' });
+        const errMsg = err.status === 429
+            ? 'AI model is rate-limited. Please wait 30 seconds and try again.'
+            : `AI Stylist error: ${err.message || 'Unknown error'}`;
+        res.status(500).json({ message: errMsg });
     }
 });
 
@@ -241,7 +244,11 @@ Rules:
         });
 
     } catch (err) {
-        res.status(500).json({ message: 'AI model is currently busy or rate-limited (Free Tier). Please wait 30 seconds and try again.' });
+        console.error('AI Packing List Error:', err);
+        const errMsg = err.status === 429
+            ? 'AI model is rate-limited. Please wait 30 seconds and try again.'
+            : `AI Packing error: ${err.message || 'Unknown error'}`;
+        res.status(500).json({ message: errMsg });
     }
 });
 

@@ -3,10 +3,14 @@ const router = express.Router();
 const { upload } = require('../config/cloudinary');
 const Item = require('../models/Item');
 const auth = require('../middleware/auth');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
+const multer = require('multer');
+const { removeBackground } = require('@imgly/background-removal-node');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+const memoryStorage = multer.memoryStorage();
+const memoryUpload = multer({ storage: memoryStorage });
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // All wardrobe routes are now protected — user must be logged in
 
@@ -230,13 +234,16 @@ Be specific and accurate. A watch → category: Accessories, type: Watch. Never 
 
         while (attempts < maxAttempts) {
             try {
-                result = await model.generateContent([
-                    { text: prompt },
-                    { inlineData: { mimeType, data: imageBase64 } }
-                ]);
+                result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: [
+                        { inlineData: { mimeType, data: imageBase64 } },
+                        { text: prompt }
+                    ]
+                });
                 break;
             } catch (err) {
-                if (err.status === 429 && attempts < maxAttempts - 1) {
+                if ((err.status === 429 || err.code === 429) && attempts < maxAttempts - 1) {
                     attempts++;
                     console.log(`Auto-tag Rate limited. Retry ${attempts}...`);
                     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -246,8 +253,7 @@ Be specific and accurate. A watch → category: Accessories, type: Watch. Never 
             }
         }
 
-        const response = await result.response;
-        let aiText = response.text().replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        let aiText = result.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const tags = JSON.parse(aiText);
         res.json(tags);
     } catch (err) {
@@ -294,13 +300,16 @@ If you see multiple prices, use the current sale price or MRP. Be highly accurat
 
         while (attempts < maxAttempts) {
             try {
-                result = await model.generateContent([
-                    { text: prompt },
-                    { inlineData: { mimeType, data: imageBase64 } }
-                ]);
+                result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: [
+                        { inlineData: { mimeType, data: imageBase64 } },
+                        { text: prompt }
+                    ]
+                });
                 break;
             } catch (err) {
-                if (err.status === 429 && attempts < maxAttempts - 1) {
+                if ((err.status === 429 || err.code === 429) && attempts < maxAttempts - 1) {
                     attempts++;
                     console.log(`Tag analyze Rate limited. Retry ${attempts}...`);
                     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -310,13 +319,38 @@ If you see multiple prices, use the current sale price or MRP. Be highly accurat
             }
         }
 
-        const response = await result.response;
-        let aiText = response.text().replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        let aiText = result.text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const tagData = JSON.parse(aiText);
         res.json(tagData);
     } catch (err) {
         console.error('Tag analyze error:', err);
         res.status(500).json({ message: 'Failed to read tag. Try a clearer photo or enter manually.' });
+    }
+});
+
+// @route   POST /api/wardrobe/remove-background
+// @desc    Remove background from an uploaded image using server-side AI
+router.post('/remove-background', auth, memoryUpload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image uploaded' });
+        }
+
+        console.log('--- STARTING BACKEND BACKGROUND REMOVAL ---');
+        console.log('Received file size:', req.file.size);
+
+        // Run background removal using CPU/WASM on the server
+        const blobInput = new Blob([req.file.buffer], { type: req.file.mimetype });
+        const blob = await removeBackground(blobInput, {
+            model: 'small', // Use small model for fast and lightweight server processing
+        });
+
+        const buffer = Buffer.from(await blob.arrayBuffer());
+        res.set('Content-Type', 'image/png');
+        res.send(buffer);
+    } catch (err) {
+        console.error('Backend BG removal error:', err);
+        res.status(500).json({ message: 'Failed to remove background on server' });
     }
 });
 
