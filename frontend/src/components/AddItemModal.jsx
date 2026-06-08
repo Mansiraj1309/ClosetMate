@@ -4,6 +4,7 @@ import { Upload, X, Sparkles, Loader, Image, CheckCircle, Camera } from 'lucide-
 import './AddItemModal.css';
 
 import heic2any from 'heic2any';
+import { removeBackground as imglyRemoveBackground } from '@imgly/background-removal';
 
 import { CLOTHING_CATEGORIES, FORMALITY_OPTIONS, SEASON_OPTIONS, STYLE_OPTIONS } from '../constants';
 
@@ -240,26 +241,15 @@ const AddItemModal = ({ isOpen, onClose, onAdd, onUpdate, token, editItem, initi
             const resizedFile = await resizeImage(file, 1024);
             console.log('Resized image successfully:', resizedFile.size);
 
-            // 2. Send the image to the backend endpoint for processing
-            const payload = new FormData();
-            payload.append('image', resizedFile);
-
-            console.log('Sending request to backend background removal endpoint...');
-            const res = await fetch(`${API_BASE}/api/wardrobe/remove-background`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: payload,
+            // 2. Run background removal locally in the browser/app (prevents backend OOM and speeds up Render)
+            console.log('Running background removal locally...');
+            const resultBlob = await imglyRemoveBackground(resizedFile, {
+                model: 'small', // Use small model for fast and lightweight processing on mobile
+                progress: (key, current, total) => {
+                    console.log(`Downloading/processing ${key}: ${current}/${total}`);
+                }
             });
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || `Server responded with status ${res.status}`);
-            }
-
-            const resultBlob = await res.blob();
-            console.log('Received processed image from backend. Size:', resultBlob.size);
+            console.log('Received processed image locally. Size:', resultBlob.size);
 
             // 3. Load the cutout PNG
             const cutoutImg = new window.Image();

@@ -5,7 +5,6 @@ const Item = require('../models/Item');
 const auth = require('../middleware/auth');
 const { GoogleGenAI } = require('@google/genai');
 const multer = require('multer');
-const { removeBackground } = require('@imgly/background-removal-node');
 
 const memoryStorage = multer.memoryStorage();
 const memoryUpload = multer({ storage: memoryStorage });
@@ -328,30 +327,10 @@ If you see multiple prices, use the current sale price or MRP. Be highly accurat
     }
 });
 
-// @route   POST /api/wardrobe/remove-background
-// @desc    Remove background from an uploaded image using server-side AI
-router.post('/remove-background', auth, memoryUpload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No image uploaded' });
-        }
-
-        console.log('--- STARTING BACKEND BACKGROUND REMOVAL ---');
-        console.log('Received file size:', req.file.size);
-
-        // Run background removal using CPU/WASM on the server
-        const blobInput = new Blob([req.file.buffer], { type: req.file.mimetype });
-        const blob = await removeBackground(blobInput, {
-            model: 'small', // Use small model for fast and lightweight server processing
-        });
-
-        const buffer = Buffer.from(await blob.arrayBuffer());
-        res.set('Content-Type', 'image/png');
-        res.send(buffer);
-    } catch (err) {
-        console.error('Backend BG removal error:', err);
-        res.status(500).json({ message: 'Failed to remove background on server' });
-    }
+router.post('/remove-background', auth, async (req, res) => {
+    return res.status(400).json({ 
+        message: 'Server-side background removal is disabled to prevent memory limits. Please use the client-side background removal built into the application.' 
+    });
 });
 
 module.exports = router;
