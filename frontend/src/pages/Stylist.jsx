@@ -82,53 +82,87 @@ const Stylist = () => {
             ? `Current weather: ${Math.round(weather.main.temp)}°C, ${weather.weather[0].description} in ${weather.name}.`
             : '';
 
-        try {
-            let endpoint, body;
+        // Helper: fetch with timeout
+        const fetchWithTimeout = (url, options, timeoutMs = 60000) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            return fetch(url, { ...options, signal: controller.signal })
+                .finally(() => clearTimeout(timer));
+        };
 
-            if (isPackingRequest(text)) {
-                // ✅ FIXED: actually call the packing-list endpoint
-                const { destination, duration } = extractPackingParams(text);
-                endpoint = `${API_BASE}/api/stylist/packing-list`;
-                body = { destination, duration, activities: text };
-            } else {
-                endpoint = `${API_BASE}/api/stylist/recommend`;
-                body = {
-                    occasion: `${text}. ${liveWeatherContext}`,
-                    season: liveSeason
-                };
+        const MAX_RETRIES = 3;
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                let endpoint, body;
+
+                if (isPackingRequest(text)) {
+                    const { destination, duration } = extractPackingParams(text);
+                    endpoint = `${API_BASE}/api/stylist/packing-list`;
+                    body = { destination, duration, activities: text };
+                } else {
+                    endpoint = `${API_BASE}/api/stylist/recommend`;
+                    body = {
+                        occasion: `${text}. ${liveWeatherContext}`,
+                        season: liveSeason
+                    };
+                }
+
+                // Show "waking up" hint on second attempt
+                if (attempt === 2) {
+                    addMessage({
+                        type: 'ai',
+                        text: '⏳ Server is waking up (free tier), please hold on...',
+                        isStatus: true,
+                        id: 'wakeup-msg'
+                    });
+                }
+
+                const res = await fetchWithTimeout(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body),
+                }, 65000);
+
+                // Remove wakeup message if shown
+                setMessages(prev => prev.filter(m => m.id !== 'wakeup-msg'));
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to get recommendation');
+
+                if (isPackingRequest(text)) {
+                    addMessage({ type: 'ai', text: data.rationale, packingData: data });
+                } else {
+                    addMessage({ type: 'ai', text: data.rationale, recommendation: data });
+                }
+                setIsTyping(false);
+                return; // success — exit loop
+
+            } catch (err) {
+                lastError = err;
+                console.error(`Stylist attempt ${attempt} failed:`, err.message);
+                const isNetworkErr = err.name === 'AbortError' || err.message === 'Failed to fetch' || err.message.includes('fetch');
+                if (isNetworkErr && attempt < MAX_RETRIES) {
+                    // wait 3s before retry
+                    await new Promise(r => setTimeout(r, 3000));
+                    continue;
+                }
+                break;
             }
-
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(body),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Failed to get recommendation');
-
-            if (isPackingRequest(text)) {
-                addMessage({
-                    type: 'ai',
-                    text: data.rationale,
-                    packingData: data
-                });
-            } else {
-                addMessage({
-                    type: 'ai',
-                    text: data.rationale,
-                    recommendation: data
-                });
-            }
-        } catch (err) {
-            console.error('Stylist Error:', err);
-            addMessage({ type: 'ai', text: `Sorry, I ran into an issue: ${err.message}. Please try again!`, isError: true });
-        } finally {
-            setIsTyping(false);
         }
+
+        // All attempts failed
+        setMessages(prev => prev.filter(m => m.id !== 'wakeup-msg'));
+        const isNetworkErr = lastError?.name === 'AbortError' || lastError?.message === 'Failed to fetch' || lastError?.message?.includes('fetch');
+        const msg = isNetworkErr
+            ? '🔌 Could not reach the server. It may be starting up — please wait 30 seconds and try again!'
+            : `Sorry, I ran into an issue: ${lastError?.message}. Please try again!`;
+        addMessage({ type: 'ai', text: msg, isError: true });
+        setIsTyping(false);
     };
 
     const handleSend = (text = inputValue) => {
